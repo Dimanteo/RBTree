@@ -112,6 +112,39 @@ int rbt_foreach(struct RBTree *tree,
         return retcode;
 }
 
+struct RBTree* rbt_find(const struct RBTree *tree, value_t val)
+{
+        assert(tree);
+        if (tree == NULL) {
+                return NULL;
+        }
+
+        int err = 0;
+        value_t cur_val = rbt_get_val(tree, &err);
+        if (err) {
+                return NULL;
+        }
+        if (val == cur_val) {
+                return tree;
+        }
+        struct RBTree *ret_node = NULL;
+        if (val < cur_val) {
+                struct RBTree *left_ch = rbt_get_left(tree);
+                if (left_ch != NULL) {
+                        ret_node = rbt_find(left_ch, val);
+                }
+        } else {
+                struct RBTree *right_ch = rbt_get_right(tree);
+                if (right_ch != NULL) {
+                        ret_node = rbt_find(right_ch, val);
+                }
+        }
+
+        return ret_node;
+}
+
+int rbt_remove(struct RBTree *tree, value_t val);
+
 struct RBTree *rbt_get_left(const struct RBTree *tree)
 {
         assert(tree);
