@@ -9,8 +9,6 @@ struct RBTree {
         struct RBTree *parent;
 };
 
-/* Private functions */
-
 int rbt_isempty(struct RBTree *child)
 {
         if (child == NULL) {
@@ -20,7 +18,14 @@ int rbt_isempty(struct RBTree *child)
         }
 }
 
-/* Public interfaces */
+int rbt_isroot(const struct RBTree *node)
+{
+        if (node == NULL || node->parent != NULL) {
+                return 0;
+        } else {
+                return 1;
+        }
+}
 
 struct RBTree *rbt_init(value_t val)
 {
@@ -59,8 +64,9 @@ int rbt_destruct(struct RBTree *tree)
 int rbt_insert(struct RBTree *tree, value_t val)
 {
         assert(tree);
-        if (!tree)
+        if (!tree) {
                 return -1;
+        }
 
         int child_index;
 
@@ -77,6 +83,7 @@ int rbt_insert(struct RBTree *tree, value_t val)
                         return -1;
                 }
                 tree->children[child_index] = tmp;
+                tmp->parent = tree;
         } else {
                 int retcode = rbt_insert(tree->children[child_index], val);
                 return retcode;
@@ -143,7 +150,23 @@ struct RBTree* rbt_find(const struct RBTree *tree, value_t val)
         return ret_node;
 }
 
-int rbt_remove(struct RBTree *tree, value_t val);
+int rbt_remove(struct RBTree *tree) 
+{
+        assert(tree);
+        if (tree == NULL) {
+                return -1;
+        }
+
+        if (rbt_isroot(tree)) {
+                struct RBTree *right_ch = rbt_get_right(tree);
+                struct RBTree *left_ch = rbt_get_left(tree);
+                
+        } else {
+                struct RBTree *parent = rbt_get_parent(tree);
+        }
+
+        return 0;
+}
 
 struct RBTree *rbt_get_left(const struct RBTree *tree)
 {
@@ -155,7 +178,8 @@ struct RBTree *rbt_get_left(const struct RBTree *tree)
         return tree->children[Left];
 }
 
-struct RBTree *rbt_get_right(const struct RBTree *tree) {
+struct RBTree *rbt_get_right(const struct RBTree *tree) 
+{
         assert(tree);
         if (!tree) {
                 return NULL;
@@ -164,7 +188,22 @@ struct RBTree *rbt_get_right(const struct RBTree *tree) {
         return tree->children[Right];
 }
 
-value_t rbt_get_val(const struct RBTree *tree, int* err) {
+struct RBTree *rbt_get_parent(const struct RBTree *tree)
+{
+        assert(tree);
+        if (!tree) {
+                return NULL;
+        }
+
+        if (tree->parent == NULL) {
+                return tree;
+        }
+
+        return tree->parent;
+}
+
+value_t rbt_get_val(const struct RBTree *tree, int* err) 
+{
         assert(tree);
         if (!tree) {
                 if (err != NULL) {
