@@ -11,7 +11,7 @@ struct RBTree {
 
 /* Private functions */
 
-int is_empty_ch(struct RBTree *child)
+int rbt_isempty(struct RBTree *child)
 {
         if (child == NULL) {
                 return 1;
@@ -46,10 +46,10 @@ int rbt_destruct(struct RBTree *tree)
         int retcode = 0;
         struct RBTree *left_ch = tree->children[Left];
         struct RBTree *right_ch = tree->children[Right];
-        if (!is_empty_ch(left_ch)) {
+        if (!rbt_isempty(left_ch)) {
                 retcode |= rbt_destruct(left_ch);
         }
-        if (!is_empty_ch(right_ch)) {
+        if (!rbt_isempty(right_ch)) {
                 retcode |= rbt_destruct(right_ch);
         }
         free(tree);
@@ -71,7 +71,7 @@ int rbt_insert(struct RBTree *tree, value_t val)
         } else {
                 return 0;
         }
-        if (is_empty_ch(tree->children[child_index])) {
+        if (rbt_isempty(tree->children[child_index])) {
                 struct RBTree *tmp = rbt_init(val);
                 if (tmp == NULL) {
                         return -1;
@@ -83,4 +83,65 @@ int rbt_insert(struct RBTree *tree, value_t val)
         }
 
         return 0;
+}
+
+int rbt_foreach(struct RBTree *tree, 
+                void(*callback)(value_t, struct RBTree*, void*), void *data)
+{
+        assert(tree);
+        assert(callback);
+        assert(data);
+        if (!tree || !callback || !data) {
+                return -1;
+        }
+
+        int retcode = 0;
+        int err = 0;
+        struct RBTree *left_ch = tree->children[Left];
+        struct RBTree *right_ch = tree->children[Right];
+        if (!rbt_isempty(left_ch)) {
+                retcode |= rbt_foreach(left_ch, callback, data);
+        }
+        callback(rbt_get_val(tree, &err), tree, data);
+        if (!rbt_isempty(right_ch)) {
+                retcode |= rbt_foreach(right_ch, callback, data);
+        }
+        if (err) {
+                retcode = -1;
+        }
+        return retcode;
+}
+
+struct RBTree *rbt_get_left(const struct RBTree *tree)
+{
+        assert(tree);
+        if (!tree) {
+                return NULL;
+        }
+
+        return tree->children[Left];
+}
+
+struct RBTree *rbt_get_right(const struct RBTree *tree) {
+        assert(tree);
+        if (!tree) {
+                return NULL;
+        }
+
+        return tree->children[Right];
+}
+
+value_t rbt_get_val(const struct RBTree *tree, int* err) {
+        assert(tree);
+        if (!tree) {
+                if (err != NULL) {
+                        *err = 1;
+                }
+                return 0;
+        }
+
+        if (err != NULL) {
+                *err = 0;
+        }
+        return tree->value;
 }

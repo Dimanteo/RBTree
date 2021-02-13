@@ -14,14 +14,19 @@ int rbt_destruct(struct RBTree *tree);
 
 int rbt_insert(struct RBTree *tree, value_t val);
 
-void rbt_find(struct RBTree *tree, value_t val);
+void rbt_find(const struct RBTree *tree, value_t val);
 
 void rbt_remove(struct RBTree *tree, value_t val);
 
-void rbt_foreach(struct RBTree *tree, 
-                int(*callback)(value_t*, struct RBTree*, void*), void *data);
+int rbt_foreach(struct RBTree *tree,
+                void(*callback)(value_t, struct RBTree*, void*), void *data);
 
-int is_empty_ch(struct RBTree *child);
+int rbt_isempty(struct RBTree *child);
 
+struct RBTree *rbt_get_left(const struct RBTree *tree);
+
+struct RBTree *rbt_get_right(const struct RBTree *tree);
+
+value_t rbt_get_val(const struct RBTree *tree, int* err);
 
 #endif /* RBTREE_H */
