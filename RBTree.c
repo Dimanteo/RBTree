@@ -235,7 +235,6 @@ value_t rbt_get_val(const struct RBTree *tree, int* err)
 
 static enum Color get_color(struct RBTree *tree)
 {
-        assert(tree);
         if (rbt_isempty(tree) || tree == NULL) {
                 return BLACK;
         }
@@ -372,10 +371,10 @@ static void dump_cb(value_t val, struct RBTree *t, void *file_ptr)
         }
         
         if (!rbt_isempty(left_ch)) {
-                fprintf(file, "%d -> %d\n", val, rbt_get_val(left_ch, NULL));
+                fprintf(file, "%d -> %d [label=\"L\"]\n", val, rbt_get_val(left_ch, NULL));
         }
         if (!rbt_isempty(right_ch)) {
-                fprintf(file, "%d -> %d\n", val, rbt_get_val(right_ch, NULL));
+                fprintf(file, "%d -> %d[label=\"R\"]\n", val, rbt_get_val(right_ch, NULL));
         }
 }
 
