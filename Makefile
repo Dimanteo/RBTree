@@ -6,7 +6,10 @@ test.out: tests.o RBTree.o
 
 RBTree.o : RBTree.c
 
+dump:
+	dot -Tpng rbtree.dot -o rbtree.png
+
 clean:
-	rm -rf *.o *.d test.out
+	rm -rf *.o *.d test.out rbtree.dot rbtree.png
 
 -include *.d

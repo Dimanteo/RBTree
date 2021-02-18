@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 typedef int value_t ;
 
@@ -14,7 +15,7 @@ int rbt_destruct(struct RBTree *tree);
 
 int rbt_insert(struct RBTree *tree, value_t val);
 
-struct RBTree* rbt_find(const struct RBTree *tree, value_t val);
+struct RBTree* rbt_find(struct RBTree *tree, value_t val);
 
 int rbt_remove(struct RBTree *tree);
 
@@ -29,8 +30,12 @@ struct RBTree *rbt_get_left(const struct RBTree *tree);
 
 struct RBTree *rbt_get_right(const struct RBTree *tree);
 
-struct RBTree *rbt_get_parent(const struct RBTree *tree);
+struct RBTree *rbt_get_parent(struct RBTree *tree);
 
 value_t rbt_get_val(const struct RBTree *tree, int* err);
+
+#ifndef NDEBUG
+        void rbt_dump(struct RBTree *tree, const char* filename);
+#endif
 
 #endif /* RBTREE_H */

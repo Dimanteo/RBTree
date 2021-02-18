@@ -2,7 +2,6 @@
 
 enum Color {BLACK, RED};
 
-static const unsigned int NLeaves = 2u;
 static const int Left = 0;
 static const int Right = 1;
 
@@ -134,7 +133,7 @@ int rbt_foreach(struct RBTree *tree,
         return retcode;
 }
 
-struct RBTree* rbt_find(const struct RBTree *tree, value_t val)
+struct RBTree* rbt_find(struct RBTree *tree, value_t val)
 {
         assert(tree);
         if (tree == NULL) {
@@ -167,6 +166,7 @@ struct RBTree* rbt_find(const struct RBTree *tree, value_t val)
 
 int rbt_remove(struct RBTree *tree) 
 {
+        // TODO
         assert(tree);
         if (tree == NULL) {
                 return -1;
@@ -203,7 +203,7 @@ struct RBTree *rbt_get_right(const struct RBTree *tree)
         return tree->children[Right];
 }
 
-struct RBTree *rbt_get_parent(const struct RBTree *tree)
+struct RBTree *rbt_get_parent(struct RBTree *tree)
 {
         assert(tree);
         if (tree == NULL) {
@@ -356,3 +356,36 @@ static int balance(struct RBTree *node)
 
         return 0;
 }
+
+#ifndef NDEBUG
+
+static void dump_cb(value_t val, struct RBTree *t, void *file_ptr)
+{
+        FILE* file = *(FILE**)file_ptr;
+        struct RBTree *left_ch = rbt_get_left(t);
+        struct RBTree *right_ch = rbt_get_right(t);
+        fprintf(file, "%d [style=\"filled\", ",  val);
+        if (get_color(t) == RED) {
+                fprintf(file, "fillcolor=\"red\"];\n");
+        } else {
+                fprintf(file, "fillcolor=\"lightgrey\"];\n");
+        }
+        
+        if (!rbt_isempty(left_ch)) {
+                fprintf(file, "%d -> %d\n", val, rbt_get_val(left_ch, NULL));
+        }
+        if (!rbt_isempty(right_ch)) {
+                fprintf(file, "%d -> %d\n", val, rbt_get_val(right_ch, NULL));
+        }
+}
+
+void rbt_dump(struct RBTree *tree, const char* filename)
+{
+        FILE* file = fopen(filename, "w");
+        fprintf(file, "digraph G {\n");
+        rbt_foreach(tree, dump_cb, (void*)&file);
+        fprintf(file, "}");
+        fclose(file);
+}
+
+#endif
