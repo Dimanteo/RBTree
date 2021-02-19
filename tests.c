@@ -20,6 +20,7 @@ int main()
         rbt_insert(tree, 25);
         rbt_insert(tree, 22);
         rbt_insert(tree, 27);
+        rbt_rmval(tree, 8);
         int nodes_n = 0;
         rbt_foreach(tree, printer, (void*)&nodes_n);
         printf("Total nodes: %d\n", nodes_n);

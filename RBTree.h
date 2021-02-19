@@ -17,7 +17,9 @@ int rbt_insert(struct RBTree *tree, value_t val);
 
 struct RBTree* rbt_find(struct RBTree *tree, value_t val);
 
-int rbt_remove(struct RBTree *tree);
+int rbt_remove(struct RBTree *node);
+
+int rbt_rmval(struct RBTree *tree, value_t val);
 
 int rbt_foreach(struct RBTree *tree,
                 void(*callback)(value_t, struct RBTree*, void*), void *data);

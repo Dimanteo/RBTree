@@ -1,9 +1,7 @@
 #include "RBTree.h"
 
 enum Color {BLACK, RED};
-
-static const int Left = 0;
-static const int Right = 1;
+enum Side {LEFT = 0, RIGHT = 1};
 
 struct RBTree {
         value_t value;
@@ -14,11 +12,25 @@ struct RBTree {
 
 static enum Color get_color(struct RBTree *tree);
 
-static int balance(struct RBTree *node);
+static void set_color(struct RBTree *node, enum Color clr);
+
+static void swap_color(struct RBTree *node1, struct RBTree *node2);
+
+static int insert_balance(struct RBTree *node);
+
+static void remove_balance(struct RBTree *node);
 
 static void rotate_left(struct RBTree *node);
 
 static void rotate_right(struct RBTree *node);
+
+static void set_child(struct RBTree *parent, struct RBTree *child, enum Side side);
+
+static struct RBTree *get_rightmost(struct RBTree *node);
+
+static void destruct(struct RBTree *node);
+
+static int subtree_destruct(struct RBTree *node);
 
 int rbt_isempty(struct RBTree *leaf)
 {
@@ -45,8 +57,8 @@ struct RBTree *rbt_init(value_t val)
                 return NULL;
         }
         tree->parent = NULL;
-        tree->children[Left] = NULL;
-        tree->children[Right] = NULL;
+        tree->children[LEFT] = NULL;
+        tree->children[RIGHT] = NULL;
         tree->value = val;
         tree->color = BLACK;
 
@@ -59,18 +71,12 @@ int rbt_destruct(struct RBTree *tree)
         if (tree == NULL) {
                 return -1;
         }
+        assert(tree->parent == NULL);
+        if (!rbt_isroot(tree)) {
+                return -1;
+        }
 
-        int retcode = 0;
-        struct RBTree *left_ch = tree->children[Left];
-        struct RBTree *right_ch = tree->children[Right];
-        if (!rbt_isempty(left_ch)) {
-                retcode |= rbt_destruct(left_ch);
-        }
-        if (!rbt_isempty(right_ch)) {
-                retcode |= rbt_destruct(right_ch);
-        }
-        free(tree);
-        return retcode;
+        return subtree_destruct(tree);
 }
 
 int rbt_insert(struct RBTree *tree, value_t val)
@@ -83,9 +89,9 @@ int rbt_insert(struct RBTree *tree, value_t val)
         int child_index;
 
         if (val > tree->value) {
-                child_index = Right;
+                child_index = RIGHT;
         } else if (val < tree->value) {
-                child_index = Left;
+                child_index = LEFT;
         } else {
                 return 0;
         }
@@ -97,7 +103,7 @@ int rbt_insert(struct RBTree *tree, value_t val)
                 tree->children[child_index] = tmp;
                 tmp->parent = tree;
                 tmp->color = RED;
-                balance(tmp);
+                insert_balance(tmp);
         } else {
                 int retcode = rbt_insert(tree->children[child_index], val);
                 return retcode;
@@ -118,8 +124,8 @@ int rbt_foreach(struct RBTree *tree,
 
         int retcode = 0;
         int err = 0;
-        struct RBTree *left_ch = tree->children[Left];
-        struct RBTree *right_ch = tree->children[Right];
+        struct RBTree *left_ch = tree->children[LEFT];
+        struct RBTree *right_ch = tree->children[RIGHT];
         if (!rbt_isempty(left_ch)) {
                 retcode |= rbt_foreach(left_ch, callback, data);
         }
@@ -164,23 +170,127 @@ struct RBTree* rbt_find(struct RBTree *tree, value_t val)
         return ret_node;
 }
 
-int rbt_remove(struct RBTree *tree) 
+int rbt_rmval(struct RBTree *tree, value_t val)
 {
-        // TODO
-        assert(tree);
-        if (tree == NULL) {
+        struct RBTree *node = rbt_find(tree, val);
+        if (node == NULL) {
                 return -1;
         }
+        return rbt_remove(node);
+}
 
-        if (rbt_isroot(tree)) {
-                struct RBTree *right_ch = rbt_get_right(tree);
-                struct RBTree *left_ch = rbt_get_left(tree);
-                
+int rbt_remove(struct RBTree *node) 
+{
+        assert(node);
+        if (node == NULL) {
+                return -1;
+        }
+        
+        /* Reducing to case of deleting node with at least one
+         * empty child. Because maximum in left subtree
+         * can't have right child. */
+        if (!rbt_isempty(rbt_get_right(node)) && 
+                        !rbt_isempty(rbt_get_left(node))) {
+                struct RBTree *rmost = get_rightmost(rbt_get_left(node));
+                node->value = rmost->value;
+                node = rmost;
+        }
+
+        enum Color n_color = get_color(node);
+        if (n_color == RED) {
+                /* This can only happen if 
+                 * both children are empty. */
+                destruct(node);
         } else {
-                struct RBTree *parent = rbt_get_parent(tree);
+                remove_balance(node);
         }
 
         return 0;
+}
+
+static void remove_balance(struct RBTree *node)
+{
+        assert(node);
+        /* node color must be BLACK,
+         * because RED case was handled in caller function
+         * and doesn't require to rebalance tree */
+        assert(node->color == BLACK);
+
+        // case 1
+        if (rbt_isroot(node)) {
+                return;
+        }
+
+        struct RBTree *parent = rbt_get_parent(node);
+        struct RBTree *sibling = NULL;
+        int sib_isright = 0;
+        if (rbt_get_left(parent) == node) {
+                sibling = rbt_get_right(parent);
+                sib_isright = 1;
+        } else {
+                sibling = rbt_get_left(parent);
+        }
+        struct RBTree *sib_l = rbt_get_left(sibling);
+        struct RBTree *sib_r = rbt_get_right(sibling);
+
+        // case 2
+        if (get_color(sibling) == RED) {
+                set_color(sibling, BLACK);
+                set_color(parent, RED);
+                if (sib_isright) {
+                        rotate_left(parent);
+                        sibling = sib_l;
+                } else {
+                        rotate_right(parent);
+                        sibling = sib_r;
+                }
+                sib_l = rbt_get_left(sibling);
+                sib_r = rbt_get_right(sibling);
+        }
+        
+        if (get_color(parent) == BLACK && get_color(sibling) == BLACK &&
+                get_color(sib_r) == BLACK && get_color(sib_l) == BLACK) {
+                // case 3
+                // node, parent, sibling and sibling's children are BLACK
+                set_color(sibling, RED);
+                remove_balance(parent);
+        } else if (get_color(sib_r) == BLACK && get_color(sib_l) == BLACK &&
+                get_color(sibling) == BLACK && get_color(parent) == RED) {
+                //case 4
+                /* node, sibling and sibling children are black,
+                 * but parent is red */
+                set_color(parent, BLACK);
+                set_color(sibling, RED);
+                return;
+
+        /* the following statements just force the red 
+         * to be on the left of the left of the parent, 
+         * or right of the right, so case 6 will rotate correctly. */
+        } else if (get_color(sib_l) == RED && get_color(sib_l) == BLACK) {
+                // case 5 left is red
+                rotate_right(sibling);
+                set_color(sib_l, BLACK);
+                set_color(sibling, RED);
+                sibling = sib_l;
+        } else if (get_color(sib_r) == RED && get_color(sib_l) == BLACK) {
+                // case 5 right is red
+                rotate_left(sibling);
+                set_color(sib_r, BLACK);
+                set_color(sibling, RED);
+                sibling = sib_r;
+        }
+
+        //case 6
+        sib_l = rbt_get_left(sibling);
+        sib_r = rbt_get_right(sibling);
+        swap_color(sibling, parent);
+        if (node == rbt_get_left(parent)) {
+                set_color(sib_r, BLACK);
+                rotate_left(parent);
+        } else {
+                set_color(sib_l, BLACK);
+                rotate_right(parent);
+        }
 }
 
 struct RBTree *rbt_get_left(const struct RBTree *tree)
@@ -190,7 +300,7 @@ struct RBTree *rbt_get_left(const struct RBTree *tree)
                 return NULL;
         }
 
-        return tree->children[Left];
+        return tree->children[LEFT];
 }
 
 struct RBTree *rbt_get_right(const struct RBTree *tree) 
@@ -200,7 +310,7 @@ struct RBTree *rbt_get_right(const struct RBTree *tree)
                 return NULL;
         }
 
-        return tree->children[Right];
+        return tree->children[RIGHT];
 }
 
 struct RBTree *rbt_get_parent(struct RBTree *tree)
@@ -242,6 +352,19 @@ static enum Color get_color(struct RBTree *tree)
         return tree->color;
 }
 
+static void set_color(struct RBTree *node, enum Color clr)
+{
+        assert(node);
+        node->color = clr;
+}
+
+static void swap_color(struct RBTree *node1, struct RBTree *node2)
+{
+        enum Color tmp = get_color(node2);
+        set_color(node2, get_color(node1));
+        set_color(node1, tmp);
+}
+
 static void rotate_left(struct RBTree *node)
 {
         struct RBTree *pivot = rbt_get_right(node);
@@ -251,17 +374,17 @@ static void rotate_left(struct RBTree *node)
                 struct RBTree *parent = rbt_get_parent(node);
                 assert(parent);
 
-                if (parent->children[Left] == node) {
-                        parent->children[Left] = pivot;
+                if (parent->children[LEFT] == node) {
+                        parent->children[LEFT] = pivot;
                 } else {
-                        parent->children[Right] = pivot;
+                        parent->children[RIGHT] = pivot;
                 }
         }
 
         pivot->parent = node->parent;
         node->parent = pivot;
-        node->children[Right] = rbt_get_left(pivot);
-        pivot->children[Left] = node;
+        node->children[RIGHT] = rbt_get_left(pivot);
+        pivot->children[LEFT] = node;
 }
 
 static void rotate_right(struct RBTree *node)
@@ -273,20 +396,20 @@ static void rotate_right(struct RBTree *node)
                 struct RBTree *parent = rbt_get_parent(node);
                 assert(parent);
 
-                if (parent->children[Left] == node) {
-                        parent->children[Left] = pivot;
+                if (parent->children[LEFT] == node) {
+                        parent->children[LEFT] = pivot;
                 } else {
-                        parent->children[Right] = pivot;
+                        parent->children[RIGHT] = pivot;
                 }
         }
 
         pivot->parent = node->parent;
         node->parent = pivot;
-        node->children[Left] = rbt_get_right(pivot);
-        pivot->children[Right] = node;
+        node->children[LEFT] = rbt_get_right(pivot);
+        pivot->children[RIGHT] = node;
 }
 
-static int balance(struct RBTree *node)
+static int insert_balance(struct RBTree *node)
 {
         assert(node);
 
@@ -332,7 +455,7 @@ static int balance(struct RBTree *node)
                 parent->color = BLACK;
                 uncle->color = BLACK;
                 granddad->color = RED;
-                return balance(granddad);;
+                return insert_balance(granddad);;
         }
 
         /* case 4
@@ -354,6 +477,45 @@ static int balance(struct RBTree *node)
         }
 
         return 0;
+}
+
+static void set_child(struct RBTree *parent, struct RBTree *child, enum Side side)
+{
+        parent->children[side] = child;
+        child->parent = parent;
+}
+
+static struct RBTree *get_rightmost(struct RBTree *node)
+{
+        struct RBTree *right_ch = rbt_get_right(node);
+        while (!rbt_isempty(right_ch)) {
+                node = right_ch;
+                right_ch = rbt_get_right(node);
+        }
+        return node;
+}
+
+static void destruct(struct RBTree *node)
+{
+        assert(node);
+        free(node);
+}
+
+static int subtree_destruct(struct RBTree *node)
+{
+        assert(node);
+
+        int retcode = 0;
+        struct RBTree *left_ch = rbt_get_left(node);
+        struct RBTree *right_ch = rbt_get_right(node);
+        if (!rbt_isempty(left_ch)) {
+                retcode |= subtree_destruct(left_ch);
+        }
+        if (!rbt_isempty(right_ch)) {
+                retcode |= subtree_destruct(right_ch);
+        }
+        destruct(node);
+        return retcode;
 }
 
 #ifndef NDEBUG
