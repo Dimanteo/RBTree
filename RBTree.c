@@ -1,7 +1,7 @@
 #include "RBTree.h"
 
 enum Color {BLACK, RED};
-enum Side {LEFT = 0, RIGHT = 1};
+enum Side {LEFT = 0, RIGHT = 1, ROOT = -1};
 
 struct RBTree {
         value_t value;
@@ -15,6 +15,8 @@ static enum Color get_color(struct RBTree *tree);
 static void set_color(struct RBTree *node, enum Color clr);
 
 static void swap_color(struct RBTree *node1, struct RBTree *node2);
+
+static enum Side get_side(struct RBTree *node);
 
 static int insert_balance(struct RBTree *node);
 
@@ -196,13 +198,30 @@ int rbt_remove(struct RBTree *node)
                 node = rmost;
         }
 
-        enum Color n_color = get_color(node);
-        if (n_color == RED) {
+        if (get_color(node) == RED) {
                 /* This can only happen if 
                  * both children are empty. */
                 destruct(node);
         } else {
-                remove_balance(node);
+                struct RBTree *child = rbt_get_left(node);
+                if (rbt_isempty(child)) {
+                        child = rbt_get_right(node);
+                }
+
+                if (get_color(child) == RED) {
+                        set_color(child, BLACK);
+                        enum Side sd = get_side(node);
+                        if (sd != ROOT) {
+                                struct RBTree *parent = rbt_get_parent(node);
+                                set_child(parent, child, sd);
+                        }
+                        destruct(node);
+                } else {
+                        // This can happen only if both children are empty
+                        // FIXME
+                        remove_balance(node);
+                        destruct(node);
+                }
         }
 
         return 0;
@@ -481,8 +500,11 @@ static int insert_balance(struct RBTree *node)
 
 static void set_child(struct RBTree *parent, struct RBTree *child, enum Side side)
 {
+        assert(side != ROOT);
         parent->children[side] = child;
-        child->parent = parent;
+        if (child != NULL) {
+                child->parent = parent;
+        }
 }
 
 static struct RBTree *get_rightmost(struct RBTree *node)
@@ -498,6 +520,11 @@ static struct RBTree *get_rightmost(struct RBTree *node)
 static void destruct(struct RBTree *node)
 {
         assert(node);
+        enum Side side = get_side(node);
+        if (side != ROOT) {
+                struct RBTree *parent = rbt_get_parent(node);
+                set_child(parent, NULL, side);
+        }
         free(node);
 }
 
@@ -516,6 +543,23 @@ static int subtree_destruct(struct RBTree *node)
         }
         destruct(node);
         return retcode;
+}
+
+static enum Side get_side(struct RBTree *node)
+{
+        assert(node);
+        assert(node->parent);
+
+        if (!rbt_isroot(node)) {
+                struct RBTree *parent = rbt_get_parent(node);
+                if (rbt_get_left(parent) == node) {
+                        return LEFT;
+                } else if(rbt_get_right(parent) == node) {
+                        return RIGHT;
+                }
+        }
+
+        return ROOT;
 }
 
 #ifndef NDEBUG
