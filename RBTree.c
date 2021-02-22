@@ -548,7 +548,6 @@ static int subtree_destruct(struct RBTree *node)
 static enum Side get_side(struct RBTree *node)
 {
         assert(node);
-        assert(node->parent);
 
         if (!rbt_isroot(node)) {
                 struct RBTree *parent = rbt_get_parent(node);
