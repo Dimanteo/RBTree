@@ -18,6 +18,7 @@ valgrind:
 	valgrind --leak-check=full -s ./test.out
 
 clean:
-	rm -rf *.o *.d test.out $(GVIZ_FILE).dot $(GVIZ_FILE).png
+	rm -rf *.o *.d test.out $(GVIZ_FILE).dot $(GVIZ_FILE).png  *.gcov \
+	*.gcno *.gcda
 
 -include *.d
