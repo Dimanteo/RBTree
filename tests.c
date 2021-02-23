@@ -1,46 +1,99 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <errno.h>
 #include "RBTree.h"
 
-void printer(value_t val, struct RBTree *tree, void *nodes_n)
+/* Query language:
+ * ./test.out {[r, f, d] number}
+ * r - remove number
+ * f - find number
+ * d - dump to file <number>.dot */
+
+enum ArgType {ERR, NUM, RM, FIND, DUMP};
+
+static void printer(value_t val, struct RBTree *tree, void *nodes_n);
+
+static enum ArgType get_arg(const char *argi, int *num);
+
+int main(int argc, char **argv)
+{
+        struct RBTree *tree = rbt_init();
+        for (int i = 1; i < argc; i++) {
+                int num = 0;
+                enum ArgType argt = get_arg(argv[i], &num);
+                if (argt == NUM) {
+                        rbt_insert(tree, num);
+                } else {
+                        enum ArgType numarg = get_arg(argv[i + 1], &num);
+                        if (numarg != NUM) {
+                                argt = ERR;
+                        }
+                        switch (argt)
+                        {
+                        case RM:
+                                rbt_rmval(tree, num);
+                                break;
+                        case FIND:
+                                rbt_find(tree, num);
+                                break;
+                        case DUMP: {
+                                #ifndef NDEBUG
+                                        char fname[sizeof(num) * 2 + 5];
+                                        sprintf(fname, "%x.dot", num);
+                                        rbt_dump(tree, fname);
+                                #endif
+                                break;
+                        }
+                        default:
+                                fprintf(stderr, "Argument ignored: %s\n", argv[i]);
+                                i--;
+                                break;
+                        }
+                        i++;
+                }  
+        }
+        rbt_destruct(tree);
+        return 0;
+}
+
+static void printer(value_t val, struct RBTree *tree, void *nodes_n)
 {
         *(int*)nodes_n += 1;
         printf("Node[%p]->val = %d\n", tree, val);
 }
 
-int main() 
+static enum ArgType get_arg(const char *argi, int *num)
 {
-        int nodes_n = 0;
-        int search_val = 11;
-        int rm_val = 8;
-        struct RBTree *tree = rbt_init(13);
-        rbt_insert(tree, search_val);
-        rbt_insert(tree, rm_val);
-        rbt_insert(tree, 17);
-        rbt_insert(tree, 1);
-        rbt_insert(tree, 6);
-        rbt_insert(tree, 11);
-        rbt_insert(tree, 17);
-        rbt_insert(tree, 15);
-        rbt_insert(tree, 25);
-        rbt_insert(tree, 22);
-        rbt_insert(tree, 27);
-        #ifndef NDEBUG
-                rbt_dump(tree, "inserted.dot");
-        #endif
-        rbt_rmval(tree, 8);
-        rbt_foreach(tree, printer, (void*)&nodes_n);
-        printf("Total nodes: %d\n", nodes_n);
-        struct RBTree *node = rbt_find(tree, search_val);
-        printf("Found %d in [%p]->val = %d\n", search_val, node, rbt_get_val(node, NULL));
-        node = rbt_find(tree, rm_val);
-        if (node != NULL) {
-                printf("ERROR: found removed value\n");
-        } else {
-                printf("Value removed\n");
+        switch (*argi)
+        {
+        case 'r':
+                return RM;
+                break;
+        case 'f':
+                return FIND;
+                break;
+        case 'd':
+                return DUMP;
+                break;
         }
-        #ifndef NDEBUG
-                rbt_dump(tree, "rbtree.dot");
-        #endif
-        rbt_destruct(tree);
-        return 0;
+        char* endptr = NULL;
+        *num = strtol(argi, &endptr, 10);
+
+        if (*endptr != '\0')
+        {
+                fprintf(stderr, "Conversion error %s. Invalid symbol: %c\n", argi, *endptr);
+                return ERR;
+        }
+        if (*num == LONG_MAX && errno == ERANGE)
+        {
+                fprintf(stderr, "Overflow occured\n");
+                return ERR;
+        }
+        if (*num == LONG_MIN && errno == ERANGE)
+        {
+                fprintf(stderr, "Underflow occured\n");
+                return ERR;
+        }
+        return NUM;
 }
