@@ -5,6 +5,7 @@ enum Side {LEFT = 0, RIGHT = 1, ROOT = -1};
 
 struct RBTree {
         value_t value;
+        int has_value;
         enum Color color;
         struct RBTree *children[2];
         struct RBTree *parent;
@@ -13,6 +14,8 @@ struct RBTree {
 static enum Color get_color(struct RBTree *tree);
 
 static void set_color(struct RBTree *node, enum Color clr);
+
+static void set_val(struct RBTree *node, value_t val);
 
 static void swap_color(struct RBTree *node1, struct RBTree *node2);
 
@@ -52,7 +55,7 @@ int rbt_isroot(const struct RBTree *node)
         }
 }
 
-struct RBTree *rbt_init(value_t val)
+struct RBTree *rbt_init()
 {
         struct RBTree *tree = malloc(sizeof(struct RBTree));
         if (tree == NULL) {
@@ -61,9 +64,8 @@ struct RBTree *rbt_init(value_t val)
         tree->parent = NULL;
         tree->children[LEFT] = NULL;
         tree->children[RIGHT] = NULL;
-        tree->value = val;
         tree->color = BLACK;
-
+        tree->has_value = 0;
         return tree;
 }
 
@@ -88,26 +90,34 @@ int rbt_insert(struct RBTree *tree, value_t val)
                 return -1;
         }
 
-        int child_index;
+        if (tree->has_value == 0 && rbt_isroot(tree)) {
+                set_val(tree, val);
+                return 0;
+        }
 
-        if (val > tree->value) {
-                child_index = RIGHT;
-        } else if (val < tree->value) {
-                child_index = LEFT;
+        int child_side;
+        struct RBTree *child;
+
+        if (val > rbt_get_val(tree, NULL)) {
+                child_side = RIGHT;
+                child = rbt_get_right(tree);
+        } else if (val < rbt_get_val(tree, NULL)) {
+                child_side = LEFT;
+                child = rbt_get_left(tree);
         } else {
                 return 0;
         }
-        if (rbt_isempty(tree->children[child_index])) {
-                struct RBTree *tmp = rbt_init(val);
+        if (rbt_isempty(child)) {
+                struct RBTree *tmp = rbt_init();
                 if (tmp == NULL) {
                         return -1;
                 }
-                tree->children[child_index] = tmp;
-                tmp->parent = tree;
                 tmp->color = RED;
+                set_val(tmp, val);
+                set_child(tree, tmp, child_side);
                 insert_balance(tmp);
         } else {
-                int retcode = rbt_insert(tree->children[child_index], val);
+                int retcode = rbt_insert(child, val);
                 return retcode;
         }
 
@@ -194,7 +204,7 @@ int rbt_remove(struct RBTree *node)
         if (!rbt_isempty(rbt_get_right(node)) && 
                         !rbt_isempty(rbt_get_left(node))) {
                 struct RBTree *rmost = get_rightmost(rbt_get_left(node));
-                node->value = rmost->value;
+                set_val(node, rbt_get_val(rmost, NULL));
                 node = rmost;
         }
 
@@ -349,7 +359,9 @@ struct RBTree *rbt_get_parent(struct RBTree *tree)
 value_t rbt_get_val(const struct RBTree *tree, int* err) 
 {
         assert(tree);
-        if (tree == NULL) {
+        // strange code style for gcov
+        if (tree == NULL || 
+                        tree->has_value == 0) {
                 if (err != NULL) {
                         *err = 1;
                 }
@@ -375,6 +387,13 @@ static void set_color(struct RBTree *node, enum Color clr)
 {
         assert(node);
         node->color = clr;
+}
+
+static void set_val(struct RBTree *node, value_t val)
+{
+        assert(node);
+        node->value = val;
+        node->has_value = 1;
 }
 
 static void swap_color(struct RBTree *node1, struct RBTree *node2)

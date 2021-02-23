@@ -9,7 +9,7 @@ typedef int value_t ;
 
 struct RBTree;
 
-struct RBTree *rbt_init(value_t val);
+struct RBTree *rbt_init();
 
 int rbt_destruct(struct RBTree *tree);
 
