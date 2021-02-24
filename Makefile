@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS := -Wall -Wextra -MD -g --coverage
+CFLAGS := -Wall -Wextra -MD -g --coverage -O0
 
 test.out: tests.o RBTree.o
 	$(CC) --coverage tests.o RBTree.o -o test.out

@@ -21,9 +21,10 @@ int main(int argc, char **argv)
         struct RBTree *tree = rbt_init();
         for (int i = 1; i < argc; i++) {
                 int num = 0;
+                int retcode = 0;
                 enum ArgType argt = get_arg(argv[i], &num);
                 if (argt == NUM) {
-                        rbt_insert(tree, num);
+                        retcode = rbt_insert(tree, num);
                 } else {
                         enum ArgType numarg = get_arg(argv[i + 1], &num);
                         if (numarg != NUM) {
@@ -32,10 +33,10 @@ int main(int argc, char **argv)
                         switch (argt)
                         {
                         case RM:
-                                rbt_rmval(tree, num);
+                                retcode = rbt_rmval(tree, num);
                                 break;
                         case FIND:
-                                rbt_find(tree, num);
+                                retcode = rbt_find(tree, num);
                                 break;
                         case DUMP: {
                                 #ifndef NDEBUG
@@ -51,7 +52,8 @@ int main(int argc, char **argv)
                                 break;
                         }
                         i++;
-                }  
+                }
+                printf("arg[%d] : code[%d]\n", i, retcode);
         }
         rbt_destruct(tree);
         return 0;

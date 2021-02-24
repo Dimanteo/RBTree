@@ -42,6 +42,9 @@ int rbt_isempty(struct RBTree *leaf)
         if (leaf == NULL) {
                 return 1;
         } else {
+                if (leaf->has_value == 0) {
+                        return 1;
+                }
                 return 0;
         }
 }
@@ -115,7 +118,8 @@ int rbt_insert(struct RBTree *tree, value_t val)
                 tmp->color = RED;
                 set_val(tmp, val);
                 set_child(tree, tmp, child_side);
-                insert_balance(tmp);
+                int retcode = insert_balance(tmp);
+                return retcode;
         } else {
                 int retcode = rbt_insert(child, val);
                 return retcode;
@@ -412,17 +416,15 @@ static void rotate_left(struct RBTree *node)
                 struct RBTree *parent = rbt_get_parent(node);
                 assert(parent);
 
-                if (parent->children[LEFT] == node) {
-                        parent->children[LEFT] = pivot;
-                } else {
-                        parent->children[RIGHT] = pivot;
-                }
+                enum Side sd = get_side(node);
+                set_child(parent, pivot, sd);
+        } else {
+                pivot->parent = NULL;
         }
 
-        pivot->parent = node->parent;
-        node->parent = pivot;
-        node->children[RIGHT] = rbt_get_left(pivot);
-        pivot->children[LEFT] = node;
+        struct RBTree *pivot_l = rbt_get_left(pivot);
+        set_child(pivot, node, LEFT);
+        set_child(node, pivot_l, RIGHT);
 }
 
 static void rotate_right(struct RBTree *node)
@@ -434,17 +436,15 @@ static void rotate_right(struct RBTree *node)
                 struct RBTree *parent = rbt_get_parent(node);
                 assert(parent);
 
-                if (parent->children[LEFT] == node) {
-                        parent->children[LEFT] = pivot;
-                } else {
-                        parent->children[RIGHT] = pivot;
-                }
+                enum Side sd = get_side(node);
+                set_child(parent, pivot, sd);
+        } else {
+                pivot->parent = NULL;
         }
 
-        pivot->parent = node->parent;
-        node->parent = pivot;
-        node->children[LEFT] = rbt_get_right(pivot);
-        pivot->children[RIGHT] = node;
+        struct RBTree *pivot_r = rbt_get_right(pivot);
+        set_child(pivot, node, RIGHT);
+        set_child(node, pivot_r, LEFT);
 }
 
 static int insert_balance(struct RBTree *node)
@@ -477,12 +477,13 @@ static int insert_balance(struct RBTree *node)
         }
 
         /* looking for uncle
-         * and memorizing side of parent for case 4 */
-        int par_isleft = 0;
-        uncle = rbt_get_left(granddad);
-        if (uncle == parent) {
+         * and memorizing side of parent for case 4.
+         * par_side can't be ROOT because granddad exists */
+        enum Side parent_sd = get_side(parent);
+        if (parent_sd == LEFT) {
                 uncle = rbt_get_right(granddad);
-                par_isleft = 1;
+        } else { // par_side == RIGHT
+                uncle = rbt_get_left(granddad);
         }
 
         /* case 3
@@ -490,28 +491,40 @@ static int insert_balance(struct RBTree *node)
          * at this point and further parent.color is RED,
          * because otherwise it would be case 2 */
         if (get_color(uncle) == RED) {
-                parent->color = BLACK;
-                uncle->color = BLACK;
-                granddad->color = RED;
+                set_color(parent, BLACK);
+                set_color(uncle, BLACK);
+                set_color(granddad, RED);
                 return insert_balance(granddad);;
         }
 
-        /* case 4
+        /* case 4 - preparation for case 5
          * if uncle.color == BLACK */
-        if (par_isleft) {
-                if (rbt_get_right(parent) == node) {
+        enum Side node_sd = get_side(node);
+        if (parent_sd == LEFT) {
+                if (node_sd == RIGHT) {
                         rotate_left(parent);
-                        node->color = BLACK;
-                        granddad->color = RED;
-                        rotate_right(granddad);
+                        struct RBTree *tmp = node;
+                        node = parent;
+                        parent = tmp;
                 }
-        } else {
-                if (rbt_get_left(parent) == node) {
+        } else { // parent_sd == RIGHT
+                if (node_sd == LEFT) {
                         rotate_right(parent);
-                        node->color = BLACK;
-                        granddad->color = RED;
-                        rotate_left(granddad);
+                        struct RBTree *tmp = node;
+                        node = parent;
+                        parent = tmp;
                 }
+        }
+
+        // case 5
+        parent_sd = get_side(parent);
+        node_sd = get_side(node);
+        set_color(parent, BLACK);
+        set_color(granddad, RED);
+        if (parent_sd == LEFT && node_sd == LEFT) {
+                rotate_right(granddad);
+        } else { // parent_sd == RIGHT && node_sd == RIGHT
+                rotate_left(granddad);
         }
 
         return 0;
