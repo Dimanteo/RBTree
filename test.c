@@ -23,6 +23,7 @@ int main(int argc, char **argv)
                 enum ArgType argt = get_arg(argv[i], &num);
                 if (argt == NUM) {
                         retcode = rbt_insert(tree, num);
+                        printf("insert(%d) = %d\n", num, retcode);
                 } else {
                         enum ArgType numarg = get_arg(argv[i + 1], &num);
                         if (numarg != NUM) {
@@ -32,9 +33,11 @@ int main(int argc, char **argv)
                         {
                         case RM:
                                 retcode = rbt_remove(tree, num);
+                                printf("remove(%d) = %d\n", num, retcode);
                                 break;
                         case FIND:
                                 retcode = rbt_contains(tree, num);
+                                printf("find(%d) = %d\n", num, retcode);
                                 break;
                         case DUMP: {
                                 #ifndef NDEBUG
@@ -51,7 +54,6 @@ int main(int argc, char **argv)
                         }
                         i++;
                 }
-                printf("arg[%d] : code[%d]\n", i, retcode);
         }
         rbt_destruct(tree);
         return 0;

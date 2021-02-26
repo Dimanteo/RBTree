@@ -1,21 +1,18 @@
 CC := gcc
 CFLAGS := -Wall -Wextra -MD -g --coverage -O0
 
-test.out: tests.o RBTree.o
+test.out: test.o RBTree.o
 	$(CC) --coverage tests.o RBTree.o -o test.out
 
 gcov: test.out
-	./test.out
-	gcov RBTree.c
+	gcov -d -f RBTree.c
 
 RBTree.o : RBTree.c
 
 %.png : %.dot
 	dot -Tpng $< -o $@
 
-valgrind:
-	valgrind --leak-check=full -s ./test.out
-
+.PHONY: clean
 clean:
 	rm -rf *.o *.d test.out *.dot *.png  *.gcov *.gcno *.gcda
 
