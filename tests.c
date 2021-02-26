@@ -12,8 +12,6 @@
 
 enum ArgType {ERR, NUM, RM, FIND, DUMP};
 
-static void printer(value_t val, struct RBTree *tree, void *nodes_n);
-
 static enum ArgType get_arg(const char *argi, int *num);
 
 int main(int argc, char **argv)
@@ -33,10 +31,10 @@ int main(int argc, char **argv)
                         switch (argt)
                         {
                         case RM:
-                                retcode = rbt_rmval(tree, num);
+                                retcode = rbt_remove(tree, num);
                                 break;
                         case FIND:
-                                retcode = rbt_find(tree, num);
+                                retcode = rbt_contains(tree, num);
                                 break;
                         case DUMP: {
                                 #ifndef NDEBUG
@@ -59,12 +57,6 @@ int main(int argc, char **argv)
         return 0;
 }
 
-static void printer(value_t val, struct RBTree *tree, void *nodes_n)
-{
-        *(int*)nodes_n += 1;
-        printf("Node[%p]->val = %d\n", tree, val);
-}
-
 static enum ArgType get_arg(const char *argi, int *num)
 {
         switch (*argi)
@@ -80,22 +72,23 @@ static enum ArgType get_arg(const char *argi, int *num)
                 break;
         }
         char* endptr = NULL;
-        *num = strtol(argi, &endptr, 10);
+        long lnum = strtol(argi, &endptr, 10);
 
         if (*endptr != '\0')
         {
                 fprintf(stderr, "Conversion error %s. Invalid symbol: %c\n", argi, *endptr);
                 return ERR;
         }
-        if (*num == LONG_MAX && errno == ERANGE)
+        if (lnum == LONG_MAX && errno == ERANGE)
         {
                 fprintf(stderr, "Overflow occured\n");
                 return ERR;
         }
-        if (*num == LONG_MIN && errno == ERANGE)
+        if (lnum == LONG_MIN && errno == ERANGE)
         {
                 fprintf(stderr, "Underflow occured\n");
                 return ERR;
         }
+        *num = (int)lnum;
         return NUM;
 }
