@@ -1,17 +1,29 @@
 CC := gcc
 CFLAGS := -Wall -Wextra -MD -c
 
+release: test.out rbtest.out
+
+debug: testd.out rbtestd.out
+
+rbtest.out: rbtest.o RBTree.o
+
 test.out: test.o RBTree.o
-	$(CC) $^ -o test.out
 
-debug: testd.o RBTreed.o
-	$(CC) --coverage $^ -o dbgtest.out
+rbtestd.out: rbtestd.o RBTreed.o
 
-gcov: test.out
-	gcov -d -f RBTree.c
+testd.out: testd.o RBTreed.o
+
+gcov:
+	gcov -d -f -m RBTree.c
+
+%d.out : %d.o
+	$(CC) --coverage  $^ -o $@
 
 %d.o: %.c
 	$(CC) $(CFLAGS) -g --coverage -O0 $< -o $@
+
+%.out : %.o
+	$(CC) $^ -o $@
 
 %.o : %.c
 	$(CC) $(CFLAGS) -DNDEBUG $< -o $@
@@ -21,6 +33,7 @@ gcov: test.out
 
 .PHONY: clean
 clean:
-	rm -rf *.o *.d test.out *.dot *.png  *.gcov *.gcno *.gcda
+	rm -rf *.o *.d *.dot *.png  *.gcov *.gcno *.gcda \
+	test.out testd.out rbtest.out rbtestd.out
 
 -include *.d
