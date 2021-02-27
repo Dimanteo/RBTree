@@ -22,8 +22,8 @@ int rbt_remove(struct RBTree *tree, value_t val);
 int rbt_foreach(struct RBTree *tree,
                 void(*callback)(value_t, struct RBTree*, void*), void *data);
 
-#ifndef NDEBUG
-        void rbt_dump(struct RBTree *tree, const char* filename);
-#endif
+size_t rbt_get_size(struct RBTree *tree);
+
+void rbt_dump(struct RBTree *tree, const char* filename);
 
 #endif /* RBTREE_H */

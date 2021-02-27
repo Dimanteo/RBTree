@@ -229,6 +229,12 @@ int rbt_remove(struct RBTree *tree, value_t val)
         return 0;
 }
 
+size_t rbt_get_size(struct RBTree *tree)
+{
+        assert(ispseudo(tree));
+        return tree->node_count;
+}
+
 static int isempty(const struct RBTree *leaf)
 {
         if (leaf == NULL) {
@@ -532,10 +538,14 @@ static void remove_balance(struct RBTree *node)
         sib_r = get_right(sibling);
         swap_color(sibling, parent);
         if (node == get_left(parent)) {
-                set_color(sib_r, BLACK);
+                if (!isempty(sib_r)) {
+                        set_color(sib_r, BLACK);
+                }
                 rotate_left(parent);
         } else {
-                set_color(sib_l, BLACK);
+                if (!isempty(sib_l)) {
+                        set_color(sib_l, BLACK);
+                }
                 rotate_right(parent);
         }
 }
@@ -756,5 +766,9 @@ void rbt_dump(struct RBTree *tree, const char* filename)
         fprintf(file, "}");
         fclose(file);
 }
+
+#else
+
+void rbt_dump(struct RBTree *tree, const char* filename) {}
 
 #endif
