@@ -1,7 +1,7 @@
 #include "RBTree.h"
 
 enum Color {BLACK, RED};
-enum Side {LEFT = 0, RIGHT = 1, ROOT = -1, PSEUDO = -2};
+enum Side {LEFT = 0, RIGHT = 1, ROOT = -1, PSEUDO = -2, NONE = -3};
 
 struct RBTree {
         value_t value;
@@ -90,8 +90,6 @@ struct RBTree *rbt_init()
 
 int rbt_destruct(struct RBTree *tree) 
 {
-        assert(tree);
-        assert(ispseudo(tree));
         if (tree == NULL) {
                 return -1;
         }
@@ -111,8 +109,6 @@ int rbt_destruct(struct RBTree *tree)
 
 int rbt_insert(struct RBTree *tree, value_t val)
 {
-        assert(tree);
-        assert(ispseudo(tree));
         if (tree == NULL) {
                 return -1;
         }
@@ -134,8 +130,6 @@ int rbt_insert(struct RBTree *tree, value_t val)
 
 int rbt_contains(const struct RBTree *tree, value_t val)
 {
-        assert(tree);
-        assert(ispseudo(tree));
         if (tree == NULL) {
                 return -1;
         }
@@ -158,10 +152,6 @@ int rbt_contains(const struct RBTree *tree, value_t val)
 int rbt_foreach(struct RBTree *tree, 
                 void(*callback)(value_t, struct RBTree*, void*), void *data)
 {
-        assert(tree);
-        assert(callback);
-        assert(data);
-        assert(ispseudo(tree));
         if (!tree || !callback || !data) {
                 return -1;
         }
@@ -182,8 +172,6 @@ int rbt_foreach(struct RBTree *tree,
 
 int rbt_remove(struct RBTree *tree, value_t val) 
 {
-        assert(tree);
-        assert(ispseudo(tree));
         if (tree == NULL) {
                 return -1;
         }
@@ -214,10 +202,9 @@ int rbt_remove(struct RBTree *tree, value_t val)
                 if (get_color(child) == RED) {
                         set_color(child, BLACK);
                         enum Side sd = get_side(node);
-                        if (sd != ROOT) {
-                                struct RBTree *parent = get_parent(node);
-                                set_child(parent, child, sd);
-                        }
+                        struct RBTree *parent = get_parent(node);
+                        set_child(parent, child, sd);
+                
                 } else {
                         // This can happen only if both children are empty
                         remove_balance(node);
@@ -231,7 +218,9 @@ int rbt_remove(struct RBTree *tree, value_t val)
 
 size_t rbt_get_size(struct RBTree *tree)
 {
-        assert(ispseudo(tree));
+        if (!ispseudo(tree)) {
+                return 0;
+        }
         return tree->node_count;
 }
 
@@ -663,8 +652,18 @@ static void rotate_right(struct RBTree *node)
 
 static void set_child(struct RBTree *parent, struct RBTree *child, enum Side side)
 {
-        assert(side != ROOT);
-        parent->children[side] = child;
+        assert(side != PSEUDO);
+        assert(side != NONE);
+        if (ispseudo(parent)) {
+                parent->children[LEFT] = child;
+                parent->children[RIGHT] = child;
+        } else if (side == ROOT) {
+                assert(ispseudo(parent));
+                parent->children[LEFT] = child;
+                parent->children[RIGHT] = child;
+        } else {
+                parent->children[side] = child;        
+        }
         if (child != NULL) {
                 child->parent = parent;
         }
@@ -684,13 +683,9 @@ static void destruct(struct RBTree *node)
 {
         assert(node);
         enum Side side = get_side(node);
-        if (side != ROOT) {
+        if (side != NONE && side != PSEUDO) {
                 struct RBTree *parent = get_parent(node);
                 set_child(parent, NULL, side);
-        } else if (side == ROOT) {
-                struct RBTree *pseudo_node = get_parent(node);
-                set_child(pseudo_node, NULL, RIGHT);
-                set_child(pseudo_node, NULL, LEFT);
         }
         free(node);
 }
@@ -725,6 +720,8 @@ static enum Side get_side(const struct RBTree *node)
                         return LEFT;
                 } else if(get_right(parent) == node) {
                         return RIGHT;
+                } else {
+                        return NONE;
                 }
         }
 
