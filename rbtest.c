@@ -131,6 +131,19 @@ void test7(int test)
         rbt_destruct(tree);
 }
 
+void test8(int test)
+{
+        struct RBTree *tree = rbt_init();
+        for (size_t i = 0; i < 15; i++)
+        {
+                rbt_insert(tree, (i + 6) % 16);
+        }
+        rbt_dump(tree, DOTFILE(8, 1));
+        rbt_remove(tree, 9);
+        rbt_dump(tree, DOTFILE(8, 2));
+        rbt_destruct(tree);
+}
+
 int main(int argc, char **argv)
 {
         if (argc > 1) {
@@ -143,6 +156,7 @@ int main(int argc, char **argv)
         test5(5);
         test6(6);
         test7(7);
+        test8(8);
         return 0;
 }
 

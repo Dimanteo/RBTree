@@ -76,8 +76,7 @@ struct RBTree *rbt_init()
                 free(tree);
                 return NULL;
         }
-        set_child(tree, root, RIGHT);
-        set_child(tree, root, LEFT);
+        set_child(tree, root, ROOT);
 
         root->has_value = 0;
         set_color(root, BLACK);
@@ -542,29 +541,18 @@ static void remove_balance(struct RBTree *node)
 static struct RBTree *get_left(const struct RBTree *tree)
 {
         assert(tree);
-        if (tree == NULL) {
-                return NULL;
-        }
-
         return tree->children[LEFT];
 }
 
 static struct RBTree *get_right(const struct RBTree *tree) 
 {
         assert(tree);
-        if (tree == NULL) {
-                return NULL;
-        }
-
         return tree->children[RIGHT];
 }
 
 static struct RBTree *get_parent(const struct RBTree *tree)
 {
         assert(tree);
-        if (tree == NULL) {
-                return NULL;
-        }
 
         if (tree->parent == NULL) {
                 return tree;
