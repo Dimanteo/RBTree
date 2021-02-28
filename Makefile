@@ -13,14 +13,14 @@ rbtestd.out: rbtestd.o RBTreed.o
 
 testd.out: testd.o RBTreed.o
 
-gcov:
-	gcov -d -f -m RBTree.c
+gcov: debug
+	gcov  -d -m RBTreed
 
 %d.out : %d.o
 	$(CC) --coverage  $^ -o $@
 
 %d.o: %.c
-	$(CC) $(CFLAGS) -g --coverage -O0 $< -o $@
+	$(CC) --coverage $(CFLAGS) -g -O0 $< -o $@
 
 %.out : %.o
 	$(CC) $^ -o $@
