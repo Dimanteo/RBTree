@@ -131,15 +131,15 @@ int rbt_insert(struct RBTree *tree, value_t val)
 int rbt_contains(const struct RBTree *tree, value_t val)
 {
         if (tree == NULL) {
-                return -1;
+                return 0;
         }
         if (!ispseudo(tree)) {
-                return -1;
+                return 0;
         }
 
         struct RBTree *node = get_left(tree);
         if (isempty(node)) {
-                return -1;
+                return 0;
         }
         node = find(node, val);
         if (node == NULL) {
@@ -322,7 +322,7 @@ static struct RBTree *find(struct RBTree *node, value_t val)
         assert(!ispseudo(node));
 
         value_t cur_val = get_val(node);
-        if (val == cur_val) {
+        if (val == cur_val && node->has_value) {
                 return node;
         }
         struct RBTree *ret_node = NULL;

@@ -51,7 +51,7 @@ int rbt_insert(struct RBTree *tree, value_t val);
  * 
  * @param tree Pointer to tree object.
  * @param val Value to search for.
- * @return int 1 if contains, 0 if not contains, -1 on error.
+ * @return int 1 if contains, 0 if not contains or an error occured.
  */
 int rbt_contains(const struct RBTree *tree, value_t val);
 
@@ -67,7 +67,7 @@ int rbt_remove(struct RBTree *tree, value_t val);
 /**
  * @brief Tree iterator.
  * 
- * Iterates through all tree values and applies callback() function to each of 
+ * Performs in-order traversal of tree values and applies callback() function to each of 
  * them. As parameters callback will receive value being processed,
  * pointer to tree object for which iterator was called and pointer void* data, 
  * that has been passed through parameters.
