@@ -16,6 +16,9 @@ testd.out: testd.o RBTreed.o
 gcov: debug
 	gcov  -d -m RBTreed
 
+docs: RBTree.h doxygen-config
+	doxygen doxygen-config
+
 %d.out : %d.o
 	$(CC) --coverage  $^ -o $@
 

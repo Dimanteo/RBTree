@@ -180,7 +180,7 @@ int rbt_remove(struct RBTree *tree, value_t val)
         }
         struct RBTree *node = find(get_left(tree), val);
         if (node == NULL) {
-                return -1;
+                return 0;
         }
 
         /* Reducing to case of deleting node with at least one
@@ -213,7 +213,7 @@ int rbt_remove(struct RBTree *tree, value_t val)
         destruct(node);
         tree->node_count--;
         assert(ispseudo(tree));
-        return 0;
+        return 1;
 }
 
 size_t rbt_get_size(struct RBTree *tree)
