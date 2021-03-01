@@ -507,7 +507,7 @@ static void remove_balance(struct RBTree *node)
         /* the following statements just force the red 
          * to be on the left of the left of the parent, 
          * or right of the right, so case 6 will rotate correctly. */
-        } else if (get_color(sib_l) == RED && get_color(sib_l) == BLACK) {
+        } else if (get_color(sib_l) == RED && get_color(sib_r) == BLACK) {
                 // case 5 left is red
                 rotate_right(sibling);
                 set_color(sib_l, BLACK);
@@ -642,11 +642,7 @@ static void set_child(struct RBTree *parent, struct RBTree *child, enum Side sid
 {
         assert(side != PSEUDO);
         assert(side != NONE);
-        if (ispseudo(parent)) {
-                parent->children[LEFT] = child;
-                parent->children[RIGHT] = child;
-        } else if (side == ROOT) {
-                assert(ispseudo(parent));
+        if (ispseudo(parent) || side == ROOT) {
                 parent->children[LEFT] = child;
                 parent->children[RIGHT] = child;
         } else {
