@@ -464,10 +464,8 @@ static void remove_balance(struct RBTree *node)
 
         struct RBTree *parent = get_parent(node);
         struct RBTree *sibling = NULL;
-        int sib_isright = 0;
-        if (get_left(parent) == node) {
+        if (get_side(node) == LEFT) {
                 sibling = get_right(parent);
-                sib_isright = 1;
         } else {
                 sibling = get_left(parent);
         }
@@ -478,7 +476,7 @@ static void remove_balance(struct RBTree *node)
         if (get_color(sibling) == RED) {
                 set_color(sibling, BLACK);
                 set_color(parent, RED);
-                if (sib_isright) {
+                if (get_side(sibling) == RIGHT) {
                         rotate_left(parent);
                         sibling = sib_l;
                 } else {
