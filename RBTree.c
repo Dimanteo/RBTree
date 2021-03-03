@@ -49,7 +49,7 @@ static void swap_color(struct RBTree *node1, struct RBTree *node2);
 
 static enum Side get_side(const struct RBTree *node);
 
-static int insert_balance(struct RBTree *node);
+static void insert_balance(struct RBTree *node);
 
 static void remove_balance(struct RBTree *node);
 
@@ -60,6 +60,8 @@ static void rotate_right(struct RBTree *node);
 static void set_child(struct RBTree *parent, struct RBTree *child, enum Side side);
 
 static struct RBTree *get_rightmost(const struct RBTree *node);
+
+static int verify_balance(struct RBTree *node);
 
 struct RBTree *rbt_init()
 {
@@ -124,6 +126,7 @@ int rbt_insert(struct RBTree *tree, value_t val)
                 tree->node_count++;
         }
         assert(ispseudo(tree));
+        verify_balance(get_left(tree));
         return retcode;
 }
 
@@ -212,6 +215,7 @@ int rbt_remove(struct RBTree *tree, value_t val)
         destruct(node);
         tree->node_count--;
         assert(ispseudo(tree));
+        verify_balance(get_left(tree));
         return 1;
 }
 
@@ -282,6 +286,7 @@ static int insert(struct RBTree *node, value_t val)
 
         if (node->has_value == 0 && isroot(node)) {
                 set_val(node, val);
+                set_color(node, BLACK);
                 return 0;
         }
 
@@ -302,11 +307,10 @@ static int insert(struct RBTree *node, value_t val)
                 if (tmp == NULL) {
                         return -1;
                 }
-                tmp->color = RED;
+                set_color(tmp, RED);
                 set_val(tmp, val);
                 set_child(node, tmp, child_side);
-                int retcode = insert_balance(tmp);
-                return retcode;
+                insert_balance(tmp);
         } else {
                 int retcode = insert(child, val);
                 return retcode;
@@ -366,7 +370,7 @@ static int foreach(struct RBTree *tree, struct RBTree *node,
         return retcode;
 }
 
-static int insert_balance(struct RBTree *node)
+static void insert_balance(struct RBTree *node)
 {
         assert(node);
 
@@ -377,23 +381,17 @@ static int insert_balance(struct RBTree *node)
         // case 1
         if (isroot(node)) {
                 node->color = BLACK;
-                return 0;
+                return;
         }
 
         parent = get_parent(node);
-        if (parent == NULL) {
-                return -1;
-        }
 
         // case 2
         if (get_color(parent) == BLACK) {
-                return 0;
+                return;
         }
 
         granddad = get_parent(parent);
-        if (granddad == NULL) {
-                return -1;
-        }
 
         /* looking for uncle
          * and memorizing side of parent for case 4.
@@ -406,36 +404,30 @@ static int insert_balance(struct RBTree *node)
         }
 
         /* case 3
-         * get_color doesn't throw errors
          * at this point and further parent.color is RED,
          * because otherwise it would be case 2 */
         if (get_color(uncle) == RED) {
                 set_color(parent, BLACK);
                 set_color(uncle, BLACK);
                 set_color(granddad, RED);
-                return insert_balance(granddad);;
+                insert_balance(granddad);
+                return;
         }
 
         /* case 4 - preparation for case 5
          * if uncle.color == BLACK */
         enum Side node_sd = get_side(node);
-        if (parent_sd == LEFT) {
-                if (node_sd == RIGHT) {
+        if (parent_sd == LEFT && node_sd == RIGHT) {
                         rotate_left(parent);
-                        struct RBTree *tmp = node;
-                        node = parent;
-                        parent = tmp;
-                }
-        } else { // parent_sd == RIGHT
-                if (node_sd == LEFT) {
+                        node = get_left(node);
+        } else if (parent_sd == RIGHT && node_sd == LEFT) {
                         rotate_right(parent);
-                        struct RBTree *tmp = node;
-                        node = parent;
-                        parent = tmp;
-                }
+                        node = get_right(node);
         }
 
         // case 5
+        parent = get_parent(node);
+        granddad = get_parent(parent);
         parent_sd = get_side(parent);
         node_sd = get_side(node);
         set_color(parent, BLACK);
@@ -446,7 +438,7 @@ static int insert_balance(struct RBTree *node)
                 rotate_left(granddad);
         }
 
-        return 0;
+        return;
 }
 
 static void remove_balance(struct RBTree *node)
@@ -493,6 +485,7 @@ static void remove_balance(struct RBTree *node)
                 // node, parent, sibling and sibling's children are BLACK
                 set_color(sibling, RED);
                 remove_balance(parent);
+                return;
         } else if (get_color(sib_r) == BLACK && get_color(sib_l) == BLACK &&
                 get_color(sibling) == BLACK && get_color(parent) == RED) {
                 //case 4
@@ -523,7 +516,7 @@ static void remove_balance(struct RBTree *node)
         sib_l = get_left(sibling);
         sib_r = get_right(sibling);
         swap_color(sibling, parent);
-        if (node == get_left(parent)) {
+        if (get_side(node) == LEFT) {
                 if (!isempty(sib_r)) {
                         set_color(sib_r, BLACK);
                 }
@@ -746,8 +739,25 @@ void rbt_dump(struct RBTree *tree, const char* filename)
         fclose(file);
 }
 
+static int verify_balance(struct RBTree *node)
+{
+        if (isempty(node)) {
+                return 0;
+        }
+        int l_deep = verify_balance(get_left(node));
+        int r_deep = verify_balance(get_right(node));
+        assert(l_deep == r_deep);
+        if (get_color(node) == BLACK) {
+                return l_deep + 1;
+        } else {
+                return l_deep;
+        }
+}
+
 #else
 
 void rbt_dump(struct RBTree *tree, const char* filename) {}
+
+static int verify_balance(struct RBTree *node) {}
 
 #endif
