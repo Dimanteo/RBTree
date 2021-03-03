@@ -63,7 +63,7 @@ void test4(int test)
 void test5(int test)
 {
         struct RBTree *tree = rbt_init();
-        int n = 13;
+        int n = 15;
         for (int i = 0; i < n; i++) {
                 rbt_insert(tree, i);
         }
