@@ -37,6 +37,8 @@ static struct RBTree *get_right(const struct RBTree *tree);
 
 static struct RBTree *get_parent(const struct RBTree *tree);
 
+static struct RBTree *get_sibling(const struct RBTree *node);
+
 static value_t get_val(const struct RBTree *tree);
 
 static void set_val(struct RBTree *node, value_t val);
@@ -44,8 +46,6 @@ static void set_val(struct RBTree *node, value_t val);
 static enum Color get_color(const struct RBTree *tree);
 
 static void set_color(struct RBTree *node, enum Color clr);
-
-static void swap_color(struct RBTree *node1, struct RBTree *node2);
 
 static enum Side get_side(const struct RBTree *node);
 
@@ -206,7 +206,6 @@ int rbt_remove(struct RBTree *tree, value_t val)
                         enum Side sd = get_side(node);
                         struct RBTree *parent = get_parent(node);
                         set_child(parent, child, sd);
-                
                 } else {
                         // This can happen only if both children are empty
                         remove_balance(node);
@@ -447,7 +446,7 @@ static void remove_balance(struct RBTree *node)
         /* node color must be BLACK,
          * because RED case was handled in caller function
          * and doesn't require to rebalance tree */
-        assert(node->color == BLACK);
+        assert(get_color(node) == BLACK);
 
         // case 1
         if (isroot(node)) {
@@ -455,12 +454,7 @@ static void remove_balance(struct RBTree *node)
         }
 
         struct RBTree *parent = get_parent(node);
-        struct RBTree *sibling = NULL;
-        if (get_side(node) == LEFT) {
-                sibling = get_right(parent);
-        } else {
-                sibling = get_left(parent);
-        }
+        struct RBTree *sibling = get_sibling(node);
         struct RBTree *sib_l = get_left(sibling);
         struct RBTree *sib_r = get_right(sibling);
 
@@ -498,24 +492,24 @@ static void remove_balance(struct RBTree *node)
         /* the following statements just force the red 
          * to be on the left of the left of the parent, 
          * or right of the right, so case 6 will rotate correctly. */
-        } else if (get_color(sib_l) == RED && get_color(sib_r) == BLACK) {
+        } else if (get_side(node) == LEFT && get_color(sib_l) == RED && get_color(sib_r) == BLACK) {
                 // case 5 left is red
-                rotate_right(sibling);
                 set_color(sib_l, BLACK);
                 set_color(sibling, RED);
-                sibling = sib_l;
-        } else if (get_color(sib_r) == RED && get_color(sib_l) == BLACK) {
+                rotate_right(sibling);
+        } else if ( get_side(node) == RIGHT && get_color(sib_r) == RED && get_color(sib_l) == BLACK) {
                 // case 5 right is red
-                rotate_left(sibling);
                 set_color(sib_r, BLACK);
                 set_color(sibling, RED);
-                sibling = sib_r;
+                rotate_left(sibling);
         }
 
         //case 6
+        sibling = get_sibling(node);
         sib_l = get_left(sibling);
         sib_r = get_right(sibling);
-        swap_color(sibling, parent);
+        set_color(sibling, get_color(parent));
+        set_color(parent, BLACK);
         if (get_side(node) == LEFT) {
                 if (!isempty(sib_r)) {
                         set_color(sib_r, BLACK);
@@ -552,6 +546,18 @@ static struct RBTree *get_parent(const struct RBTree *tree)
         return tree->parent;
 }
 
+static struct RBTree *get_sibling(const struct RBTree *node)
+{
+        struct RBTree *parent = get_parent(node);
+        struct RBTree *sibling = NULL;
+        if (get_side(node) == LEFT) {
+                sibling = get_right(parent);
+        } else {
+                sibling = get_left(parent);
+        }
+        return sibling;
+}
+
 static value_t get_val(const struct RBTree *tree) 
 {
         assert(tree);
@@ -578,13 +584,6 @@ static void set_val(struct RBTree *node, value_t val)
         assert(node);
         node->value = val;
         node->has_value = 1;
-}
-
-static void swap_color(struct RBTree *node1, struct RBTree *node2)
-{
-        enum Color tmp = get_color(node2);
-        set_color(node2, get_color(node1));
-        set_color(node1, tmp);
 }
 
 static void rotate_left(struct RBTree *node)
@@ -689,18 +688,24 @@ static enum Side get_side(const struct RBTree *node)
                 return PSEUDO;
         }
 
-        if (!isroot(node)) {
-                struct RBTree *parent = get_parent(node);
+        struct RBTree *parent = get_parent(node);
+        struct RBTree *par_l = get_left(parent);
+        struct RBTree *par_r = get_right(parent);
+
+        if (isroot(node)) {
+                if (par_l == node) {
+                        assert(par_l == par_r);
+                        return ROOT;
+                }
+        } else {
                 if (get_left(parent) == node) {
                         return LEFT;
                 } else if(get_right(parent) == node) {
                         return RIGHT;
-                } else {
-                        return NONE;
                 }
         }
 
-        return ROOT;
+        return NONE;
 }
 
 #ifndef NDEBUG
