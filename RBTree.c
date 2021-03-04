@@ -21,8 +21,7 @@ static int insert(struct RBTree *tree, value_t val);
 
 static struct RBTree *find(struct RBTree *node, value_t val);
 
-static void foreach(struct RBTree *tree, struct RBTree *node,
-                void(*callback)(value_t, struct RBTree*, void*), void *data);
+static value_t *foreach(struct RBTree *node, value_t *values);
 
 static int isempty(const struct RBTree *child);
 
@@ -149,7 +148,7 @@ int rbt_contains(const struct RBTree *tree, value_t val)
 int rbt_foreach(struct RBTree *tree, 
                 void(*callback)(value_t, struct RBTree*, void*), void *data)
 {
-        if (!tree || !callback || !data) {
+        if (!tree || !callback) {
                 return -1;
         }
 
@@ -157,7 +156,15 @@ int rbt_foreach(struct RBTree *tree,
         if (isempty(node)) {
                 return 0;
         }
-        foreach(tree, node, callback, data);
+
+        size_t tree_size = rbt_get_size(tree);
+        // According to man, if alloca fails program behavior is undefined \_('_')_/
+        value_t *values = alloca(tree_size * sizeof(values[0]));
+        foreach(node, values);
+        for (size_t i = 0; i < tree_size; i++) {
+                callback(values[i], tree, data);
+        }
+        
         return 0;
 }
 
@@ -324,24 +331,23 @@ static struct RBTree *find(struct RBTree *node, value_t val)
         return ret_node;
 }
 
-static void foreach(struct RBTree *tree, struct RBTree *node,
-                void(*callback)(value_t, struct RBTree*, void*), void *data)
+static value_t *foreach(struct RBTree *node, value_t *values)
 {
-        assert(tree);
         assert(node);
-        assert(callback);
-        assert(ispseudo(tree));
+        assert(values);
         assert(!ispseudo(node));
 
         struct RBTree *left_ch = get_left(node);
         struct RBTree *right_ch = get_right(node);
         if (!isempty(left_ch)) {
-                foreach(tree, left_ch, callback, data);
+                values = foreach(left_ch, values);
         }
-        callback(get_val(node), tree, data);
+        values[0] = get_val(node);
+        values++;
         if (!isempty(right_ch)) {
-                foreach(tree, right_ch, callback, data);
+                values = foreach(right_ch, values);
         }
+        return values;
 }
 
 static void insert_balance(struct RBTree *node)

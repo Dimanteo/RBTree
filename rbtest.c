@@ -63,7 +63,7 @@ void test4(int test)
 void test5(int test)
 {
         struct RBTree *tree = rbt_init();
-        check(tree, test, __LINE__);
+        check(tree != NULL, test, __LINE__);
         int n = 15;
         for (int i = 0; i < n; i++) {
                 check(rbt_insert(tree, i) == 0, test, __LINE__);
@@ -171,6 +171,28 @@ void test9(int test)
         rbt_destruct(tree);
 }
 
+void t10_callback(value_t val, struct RBTree* tree, void* cnt)
+{
+        (*(size_t*)cnt)++;
+        printf("[%lu] %d\n", *(size_t*)cnt, val);
+        rbt_remove(tree, val + 1);
+}
+
+void test10(int test)
+{
+        struct RBTree *tree = rbt_init();
+        for (size_t i = 1; i <= 10; i++)
+        {
+                check(rbt_insert(tree, i) == 0, test, __LINE__);
+        }
+        size_t size = rbt_get_size(tree);
+        size_t counter = 0;
+        rbt_foreach(tree, t10_callback, (void*)&counter);
+        check(counter == size, test, __LINE__);
+        check(rbt_get_size(tree) == 0, test, __LINE__);
+        rbt_destruct(tree);
+}
+
 int main(int argc, char **argv)
 {
         if (argc > 1) {
@@ -185,6 +207,7 @@ int main(int argc, char **argv)
         test7(7);
         test8(8);
         test9(9);
+        test10(10);
         return 0;
 }
 
