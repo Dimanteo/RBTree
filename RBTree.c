@@ -21,7 +21,7 @@ static int insert(struct RBTree *tree, value_t val);
 
 static struct RBTree *find(struct RBTree *node, value_t val);
 
-static int foreach(struct RBTree *tree, struct RBTree *node,
+static void foreach(struct RBTree *tree, struct RBTree *node,
                 void(*callback)(value_t, struct RBTree*, void*), void *data);
 
 static int isempty(const struct RBTree *child);
@@ -152,16 +152,13 @@ int rbt_foreach(struct RBTree *tree,
         if (!tree || !callback || !data) {
                 return -1;
         }
-        if (!ispseudo(tree)) {
-                return -1;
-        }
 
         struct RBTree *node = get_left(tree);
         if (isempty(node)) {
                 return 0;
         }
-        int retcode = foreach(tree, node, callback, data);
-        return retcode;
+        foreach(tree, node, callback, data);
+        return 0;
 }
 
 int rbt_remove(struct RBTree *tree, value_t val) 
@@ -259,10 +256,10 @@ static struct RBTree *create_node()
         if (node == NULL) {
                 return NULL;
         }
-        set_val(node, 0);
-        set_color(node, BLACK);
-        set_child(node, NULL, LEFT);
-        set_child(node, NULL, RIGHT);
+        node->value = 0;
+        node->color = BLACK;
+        node->children[LEFT] = NULL;
+        node->children[RIGHT] = NULL;
         node->parent = NULL;
         node->node_count = -1;
         return node;
@@ -327,30 +324,24 @@ static struct RBTree *find(struct RBTree *node, value_t val)
         return ret_node;
 }
 
-static int foreach(struct RBTree *tree, struct RBTree *node,
+static void foreach(struct RBTree *tree, struct RBTree *node,
                 void(*callback)(value_t, struct RBTree*, void*), void *data)
 {
         assert(tree);
         assert(node);
         assert(callback);
-        assert(data);
         assert(ispseudo(tree));
         assert(!ispseudo(node));
-        if (!tree || !node || !callback || !data) {
-                return -1;
-        }
 
-        int retcode = 0;
         struct RBTree *left_ch = get_left(node);
         struct RBTree *right_ch = get_right(node);
         if (!isempty(left_ch)) {
-                retcode |= foreach(tree, left_ch, callback, data);
+                foreach(tree, left_ch, callback, data);
         }
         callback(get_val(node), tree, data);
         if (!isempty(right_ch)) {
-                retcode |= foreach(tree, right_ch, callback, data);
+                foreach(tree, right_ch, callback, data);
         }
-        return retcode;
 }
 
 static void insert_balance(struct RBTree *node)
