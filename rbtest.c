@@ -244,6 +244,20 @@ void test13(int test)
         rbt_destruct(tree);
 }
 
+void test14(int test)
+{
+        struct RBTree *tree = rbt_init();
+        size_t N = 15;
+        for (size_t i = N; i > 0; i--) {
+                check(rbt_insert(tree, i), test, __LINE__);
+        }
+        check(rbt_get_size(tree) == N, test, __LINE__);
+        for (size_t i = N; i > 0; i--) {
+                check(rbt_remove(tree, i), test, __LINE__);
+        }
+        rbt_destruct(tree);
+}
+
 int main(int argc, char **argv)
 {
         if (argc > 1) {
@@ -262,6 +276,7 @@ int main(int argc, char **argv)
         test11(11);
         test12(12);
         test13(13);
+        test14(14);
         return 0;
 }
 
