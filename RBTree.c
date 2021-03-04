@@ -111,12 +111,12 @@ int rbt_insert(struct RBTree *tree, value_t val)
                 set_val(node, val);
                 set_child(node, NULL, ROOT);
                 set_child(tree, node, ROOT);
-                retcode = 0;
+                retcode = 1;
         } else {
                 retcode = insert(node, val);
         }
 
-        if (retcode == 0) {
+        if (retcode == 1) {
                 tree->node_count++;
         }
         assert(ispseudo(tree));
@@ -158,7 +158,7 @@ int rbt_foreach(struct RBTree *tree,
         }
 
         size_t tree_size = rbt_get_size(tree);
-        // According to man, if alloca fails program behavior is undefined \_('_')_/
+        // According to man, if alloca fails, program behavior is undefined \_('_')_/
         value_t *values = alloca(tree_size * sizeof(values[0]));
         foreach(node, values);
         for (size_t i = 0; i < tree_size; i++) {
@@ -289,6 +289,7 @@ static int insert(struct RBTree *node, value_t val)
         } else {
                 return 0;
         }
+        int retcode = 0;
         if (isempty(child)) {
                 struct RBTree *tmp = create_node();
                 if (tmp == NULL) {
@@ -298,12 +299,12 @@ static int insert(struct RBTree *node, value_t val)
                 set_val(tmp, val);
                 set_child(node, tmp, child_side);
                 insert_balance(tmp);
+                retcode = 1;
         } else {
-                int retcode = insert(child, val);
-                return retcode;
+                retcode = insert(child, val);
         }
 
-        return 0;
+        return retcode;;
 }
 
 static struct RBTree *find(struct RBTree *node, value_t val)

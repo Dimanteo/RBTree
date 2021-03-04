@@ -66,7 +66,7 @@ void test5(int test)
         check(tree != NULL, test, __LINE__);
         int n = 15;
         for (int i = 0; i < n; i++) {
-                check(rbt_insert(tree, i) == 0, test, __LINE__);
+                check(rbt_insert(tree, i) == 1, test, __LINE__);
                 check(rbt_contains(tree, i), test, __LINE__);
         }
         check(rbt_get_size(tree) == (size_t)n, test, __LINE__);
@@ -151,21 +151,24 @@ void test8(int test)
 void test9(int test)
 {
         struct RBTree *tree = rbt_init();
-        for (size_t i = 0; i < 8; i++)
+        size_t N = 8;
+        for (size_t i = 0; i < N; i++)
         {
-                check(rbt_insert(tree, i) == 0, test, __LINE__);
+                check(rbt_insert(tree, i) == 1, test, __LINE__);
                 check(rbt_insert(tree, i) == 0, test, __LINE__);
         }
+        check(rbt_get_size(tree) == N, test, __LINE__);
         rbt_dump(tree, DOTFILE(9, 1));
-        for (size_t i = 0; i < 8; i++)
+        for (size_t i = 0; i < N; i++)
         {
                 check(rbt_remove(tree, i) == 1, test, __LINE__);
                 check(rbt_remove(tree, i) == 0, test, __LINE__);
         }
+        check(rbt_get_size(tree) == 0, test, __LINE__);
         rbt_dump(tree, DOTFILE(9, 2));
-        for (size_t i = 0; i < 8; i++)
+        for (size_t i = 0; i < N; i++)
         {
-                check(rbt_insert(tree, i) == 0, test, __LINE__);
+                check(rbt_insert(tree, i) == 1, test, __LINE__);
         }
         rbt_dump(tree, DOTFILE(9, 3));
         rbt_destruct(tree);
@@ -174,22 +177,60 @@ void test9(int test)
 void t10_callback(value_t val, struct RBTree* tree, void* cnt)
 {
         (*(size_t*)cnt)++;
-        printf("[%lu] %d\n", *(size_t*)cnt, val);
         rbt_remove(tree, val + 1);
 }
 
 void test10(int test)
 {
         struct RBTree *tree = rbt_init();
-        for (size_t i = 1; i <= 10; i++)
-        {
-                check(rbt_insert(tree, i) == 0, test, __LINE__);
+        for (size_t i = 1; i <= 10; i++) {
+                check(rbt_insert(tree, i) == 1, test, __LINE__);
         }
         size_t size = rbt_get_size(tree);
         size_t counter = 0;
         rbt_foreach(tree, t10_callback, (void*)&counter);
         check(counter == size, test, __LINE__);
-        check(rbt_get_size(tree) == 0, test, __LINE__);
+        check(rbt_get_size(tree) == 1, test, __LINE__);
+        rbt_destruct(tree);
+}
+
+void t11_callback(value_t val, struct RBTree* tree, void* cnt)
+{
+        (*(size_t*)cnt)++;
+        rbt_remove(tree, val - 1);
+}
+
+void test11(int test)
+{
+        struct RBTree *tree = rbt_init();
+        for (size_t i = 1; i <= 10; i++) {
+                check(rbt_insert(tree, i) == 1, test, __LINE__);
+        }
+        size_t size = rbt_get_size(tree);
+        size_t counter = 0;
+        rbt_foreach(tree, t10_callback, (void*)&counter);
+        check(counter == size, test, __LINE__);
+        check(rbt_get_size(tree) == 1, test, __LINE__);
+        rbt_destruct(tree);
+}
+
+void t12_callback(value_t val, struct RBTree* tree, void* cnt)
+{
+        (*(size_t*)cnt)++;
+        rbt_remove(tree, val);
+}
+
+void test12(int test)
+{
+        struct RBTree *tree = rbt_init();
+        for (size_t i = 1; i <= 10; i++) {
+                check(rbt_insert(tree, i) == 1, test, __LINE__);
+        }
+        size_t size = rbt_get_size(tree);
+        size_t counter = 0;
+        rbt_foreach(tree, t10_callback, (void*)&counter);
+        check(counter == size, test, __LINE__);
+        check(rbt_get_size(tree) == 1, test, __LINE__);
         rbt_destruct(tree);
 }
 
@@ -208,6 +249,8 @@ int main(int argc, char **argv)
         test8(8);
         test9(9);
         test10(10);
+        test11(11);
+        test12(12);
         return 0;
 }
 

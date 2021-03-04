@@ -42,7 +42,7 @@ int rbt_destruct(struct RBTree *tree);
  * 
  * @param tree Pointer to tree object.
  * @param val Value to insert.
- * @return int 0 on success, -1 on error.
+ * @return int 1 if value inserted, 0 if value already was in tree, -1 on error.
  */
 int rbt_insert(struct RBTree *tree, value_t val);
 
@@ -67,8 +67,8 @@ int rbt_remove(struct RBTree *tree, value_t val);
 /**
  * @brief Tree iterator.
  * 
- * Performs in-order traversal of tree values and applies callback() function to each of 
- * them. As parameters callback will receive value being processed,
+ * Applies callback to each value stored in tree in ascending order.
+ * As parameters callback will receive value being processed,
  * pointer to tree object for which iterator was called and pointer void* data, 
  * that has been passed through parameters.
  * 
@@ -76,6 +76,9 @@ int rbt_remove(struct RBTree *tree, value_t val);
  * @param callback Pointer to callback function.
  * @param data Pointer to pass to callback function as parameter.
  * @return int 0 on success, -1 on error.
+ * @warning Function creates an array of values and then iterates through it.
+ * That means, that modifying tree inside callback function 
+ * will have no effect on iteration order and values.
  */
 int rbt_foreach(struct RBTree *tree,
                 void(*callback)(value_t, struct RBTree*, void*), void *data);
