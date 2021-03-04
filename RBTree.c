@@ -79,9 +79,6 @@ int rbt_destruct(struct RBTree *tree)
         if (tree == NULL) {
                 return -1;
         }
-        if (!ispseudo(tree)) {
-                return -1;
-        }
         struct RBTree *node = get_left(tree);
         if (!isempty(node)) {
                 subtree_destruct(node);
@@ -95,9 +92,6 @@ int rbt_destruct(struct RBTree *tree)
 int rbt_insert(struct RBTree *tree, value_t val)
 {
         if (tree == NULL) {
-                return -1;
-        }
-        if (!ispseudo(tree)) {
                 return -1;
         }
         struct RBTree *node = get_left(tree);
@@ -127,9 +121,6 @@ int rbt_insert(struct RBTree *tree, value_t val)
 int rbt_contains(const struct RBTree *tree, value_t val)
 {
         if (tree == NULL) {
-                return 0;
-        }
-        if (!ispseudo(tree)) {
                 return 0;
         }
 
@@ -171,9 +162,6 @@ int rbt_foreach(struct RBTree *tree,
 int rbt_remove(struct RBTree *tree, value_t val) 
 {
         if (tree == NULL) {
-                return -1;
-        }
-        if (!ispseudo(tree)) {
                 return -1;
         }
         if (isempty(get_left(tree))) {
@@ -219,9 +207,6 @@ int rbt_remove(struct RBTree *tree, value_t val)
 
 size_t rbt_get_size(struct RBTree *tree)
 {
-        if (!ispseudo(tree)) {
-                return 0;
-        }
         return tree->node_count;
 }
 
@@ -235,9 +220,7 @@ static int isempty(const struct RBTree *leaf)
 
 static int isroot(const struct RBTree *node)
 {
-        if (node == NULL) {
-                return 0;
-        }
+        assert(node);
         struct RBTree *parent = get_parent(node);
         if (ispseudo(parent)) {
                 return 1;
