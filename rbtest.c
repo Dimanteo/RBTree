@@ -291,6 +291,33 @@ void test15(int test)
 #endif
 }
 
+void test16(int test)
+{
+        size_t N = 1000;
+        int *entry = alloca(sizeof(int) * N);
+        srand(Seed);
+        struct RBTree *tree = rbt_init();
+        check(tree != NULL, test, __LINE__);
+        for (size_t i = 0; i < N; i++) {
+                entry[i] = rand() % N;
+                int ret = rbt_insert(tree, entry[i]);
+                check(ret != -1, test, __LINE__);
+                if (ret == 0) {
+                        entry[i] = -1;
+                }
+        }
+        for (size_t i = 0; i < N; i++) {
+                int ret = rbt_remove(tree, entry[i]);
+                check(ret != -1, test, __LINE__);
+                if (entry[i] != -1) {
+                        check(ret == 1, test, __LINE__);
+                } else {
+                        check(ret == 0, test, __LINE__);
+                }
+        }
+        check(rbt_destruct(tree) == 0, test, __LINE__);
+}
+
 int main(int argc, char **argv)
 {
         if (argc > 1) {
@@ -314,6 +341,7 @@ int main(int argc, char **argv)
         test13(13);
         test14(14);
         test15(15);
+        test16(16);
         return 0;
 }
 
