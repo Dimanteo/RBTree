@@ -1,4 +1,5 @@
 #include "RBTree.h"
+#include <fiu-local.h>
 
 enum Color {BLACK, RED};
 enum Side {LEFT = 0, RIGHT = 1, ROOT = -1, PSEUDO = -2, NONE = -3};
@@ -243,6 +244,7 @@ static int ispseudo(const struct RBTree *node)
 static struct RBTree *create_node()
 {
         struct RBTree *node = malloc(sizeof(*node));
+        fiu_return_on("malloc_failure", NULL);
         if (node == NULL) {
                 return NULL;
         }

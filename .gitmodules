@@ -1,0 +1,3 @@
+[submodule "libfiu"]
+	path = libfiu
+	url = https://github.com/albertito/libfiu.git
