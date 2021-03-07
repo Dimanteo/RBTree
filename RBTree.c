@@ -62,6 +62,8 @@ static struct RBTree *get_rightmost(const struct RBTree *node);
 
 static int verify_balance(struct RBTree *node);
 
+static void* fiu_malloc(size_t size);
+
 struct RBTree *rbt_init()
 {
         struct RBTree *tree = create_node();
@@ -243,8 +245,7 @@ static int ispseudo(const struct RBTree *node)
 
 static struct RBTree *create_node()
 {
-        struct RBTree *node = malloc(sizeof(*node));
-        fiu_return_on("malloc_failure", NULL);
+        struct RBTree *node = fiu_malloc(sizeof(*node));
         if (node == NULL) {
                 return NULL;
         }
@@ -723,6 +724,12 @@ static int verify_balance(struct RBTree *node)
         } else {
                 return l_deep;
         }
+}
+
+static void* fiu_malloc(size_t size)
+{
+        fiu_return_on("malloc_failure", NULL);
+        return malloc(size);
 }
 
 #else
