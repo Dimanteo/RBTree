@@ -263,6 +263,7 @@ void test14(int test)
 
 void test15(int test)
 {
+#ifdef FIU_ENABLE
         char mem_fail[] = "malloc_failure";
         fiu_enable(mem_fail, test, NULL, 0);
         struct RBTree *tree = rbt_init();
@@ -287,6 +288,7 @@ void test15(int test)
         check(rbt_insert(tree, 1) == 1, test, __LINE__);
         rbt_dump(tree, DOTFILE(15, 1));
         rbt_destruct(tree);
+#endif
 }
 
 int main(int argc, char **argv)

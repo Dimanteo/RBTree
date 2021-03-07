@@ -657,11 +657,10 @@ static enum Side get_side(const struct RBTree *node)
 
         struct RBTree *parent = get_parent(node);
         struct RBTree *par_l = get_left(parent);
-        struct RBTree *par_r = get_right(parent);
 
         if (isroot(node)) {
                 if (par_l == node) {
-                        assert(par_l == par_r);
+                        assert(par_l == get_right(parent));
                         return ROOT;
                 }
         } else {
@@ -673,6 +672,12 @@ static enum Side get_side(const struct RBTree *node)
         }
 
         return NONE;
+}
+
+static void* fiu_malloc(size_t size)
+{
+        fiu_return_on("malloc_failure", NULL);
+        return malloc(size);
 }
 
 #ifndef NDEBUG
@@ -726,16 +731,10 @@ static int verify_balance(struct RBTree *node)
         }
 }
 
-static void* fiu_malloc(size_t size)
-{
-        fiu_return_on("malloc_failure", NULL);
-        return malloc(size);
-}
-
 #else
 
 void rbt_dump(struct RBTree *tree, const char* filename) {}
 
-static int verify_balance(struct RBTree *node) {}
+static int verify_balance(struct RBTree *node) {return 1;}
 
 #endif
