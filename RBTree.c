@@ -724,6 +724,13 @@ static int verify_balance(struct RBTree *node)
         int l_deep = verify_balance(get_left(node));
         int r_deep = verify_balance(get_right(node));
         assert(l_deep == r_deep);
+        value_t val = get_val(node);
+        if (!isempty(get_left(node))) {
+                assert(val > get_val(get_left(node)));
+        }
+        if (!isempty(get_right(node))) {
+                assert(val < get_val(get_right(node)));
+        }
         if (get_color(node) == BLACK) {
                 return l_deep + 1;
         } else {
