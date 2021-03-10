@@ -5,6 +5,8 @@ LIB_PATH := ./libfiu/libfiu
 
 release: test.out rbtest.out
 
+all: release debug shared
+
 debug: testd.out rbtestd.out
 
 shared: testsh.out rbtestsh.out
@@ -54,7 +56,7 @@ libfiu_clean:
 
 .PHONY: clean
 clean:
-	rm -rf *.o *.d *.dot *.png  *.gcov *.gcno *.gcda .so \
+	rm -rf *.o *.d *.dot *.png  *.gcov *.gcno *.gcda *.so \
 	test.out testd.out rbtest.out rbtestd.out
 
 -include *.d
