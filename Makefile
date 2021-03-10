@@ -1,6 +1,6 @@
 CC := gcc
-CFLAGS := -Wall -Wextra -MD -c
-DEBUG_FLAGS := --coverage -I./libfiu/libfiu -DFIU_ENABLE=1 -g -O0
+CFLAGS := -Wall -Wextra -MD -c -I./libfiu/libfiu
+DEBUG_FLAGS := --coverage -DFIU_ENABLE=1 -g -O0
 LIB_PATH := ./libfiu/libfiu
 
 release: test.out rbtest.out
@@ -38,7 +38,7 @@ docs: RBTree.h doxygen-config
 	$(CC) $^ -o $@
 
 %.o : %.c
-	$(CC) $(CFLAGS) -DNDEBUG $< -o $@
+	$(CC) $(CFLAGS) -I./libfiu/libfiu -DNDEBUG $< -o $@
 
 %.so : %.c
 	$(CC) -fpic $(CFLAGS) -DNDEBUG -o $(basename $<)pic.o $<
