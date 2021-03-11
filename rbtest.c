@@ -1,8 +1,5 @@
 #include "RBTree.h"
 
-#include <fiu-local.h>
-#include <fiu-control.h>
-
 #include <stdlib.h>
 #include <errno.h>
 #include <limits.h>
@@ -263,26 +260,25 @@ void test14(int test)
 
 void test15(int test)
 {
-#ifdef FIU_ENABLE
-        char mem_fail[] = "malloc_failure";
-        fiu_enable(mem_fail, test, NULL, 0);
+#ifndef NDEBUG
+        malloc_fail_enable();
         struct RBTree *tree = rbt_init();
         check(tree == NULL, test, __LINE__);
-        fiu_disable(mem_fail);
+        malloc_fail_disable();
 
         tree = rbt_init();
 
-        fiu_enable(mem_fail, test, NULL, 0);
+        malloc_fail_enable();
         check(rbt_insert(tree, 42) == -1, test, __LINE__);
-        fiu_disable(mem_fail);
+        malloc_fail_disable();
 
         check(rbt_insert(tree, 3), test, __LINE__);
         check(rbt_insert(tree, 2), test, __LINE__);
         check(rbt_insert(tree, 5), test, __LINE__);
 
-        fiu_enable(mem_fail, test, NULL, 0);
+        malloc_fail_enable();
         check(rbt_insert(tree, 52), test, __LINE__);
-        fiu_disable(mem_fail);
+        malloc_fail_disable();
 
         check(rbt_contains(tree, 52) == 0, test, __LINE__);
         check(rbt_insert(tree, 1) == 1, test, __LINE__);
@@ -322,9 +318,6 @@ int main(int argc, char **argv)
 {
         if (argc > 1) {
                 Seed = getul(argv[1]);
-        }
-        if (fiu_init(0) < 0) {
-                fprintf(stderr, "Failed to init fault insertion lib.\n");
         }
         test1(1);
         test2(2);

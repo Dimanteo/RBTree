@@ -1,7 +1,6 @@
 CC := gcc
-CFLAGS := -Wall -Wextra -MD -c -I./libfiu/libfiu
-DEBUG_FLAGS := --coverage -DFIU_ENABLE=1 -g -O0
-LIB_PATH := ./libfiu/libfiu
+CFLAGS := -Wall -Wextra -MD -c
+DEBUG_FLAGS := --coverage -g -O0
 
 release: test.out rbtest.out
 
@@ -29,7 +28,7 @@ docs: RBTree.h doxygen-config
 	doxygen doxygen-config
 
 %d.out : %d.o
-	$(CC) -L$(LIB_PATH) -Wl,-rpath=$(LIB_PATH) --coverage -o $@ $^ -lfiu
+	$(CC) --coverage -o $@ $^
 
 %d.o: %.c
 	$(CC) $(CFLAGS) $(DEBUG_FLAGS) $< -o $@
@@ -38,7 +37,7 @@ docs: RBTree.h doxygen-config
 	$(CC) $^ -o $@
 
 %.o : %.c
-	$(CC) $(CFLAGS) -I./libfiu/libfiu -DNDEBUG $< -o $@
+	$(CC) $(CFLAGS) -DNDEBUG $< -o $@
 
 %.so : %.c
 	$(CC) -fpic $(CFLAGS) -DNDEBUG -o $(basename $<)pic.o $<
@@ -47,16 +46,9 @@ docs: RBTree.h doxygen-config
 %.png : %.dot
 	dot -Tpng $< -o $@
 
-.PHONY: libfiu
-libfiu:
-	$(MAKE) -C libfiu
-
-libfiu_clean:
-	$(MAKE) -C libfiu clean
-
 .PHONY: clean
 clean:
 	rm -rf *.o *.d *.dot *.png  *.gcov *.gcno *.gcda *.so \
-	test.out testd.out rbtest.out rbtestd.out
+	test.out testd.out testsh.out rbtest.out rbtestd.out rbtestsh.out
 
 -include *.d

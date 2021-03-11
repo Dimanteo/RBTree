@@ -102,4 +102,7 @@ size_t rbt_get_size(struct RBTree *tree);
  */
 void rbt_dump(struct RBTree *tree, const char* filename);
 
+void malloc_fail_enable();
+void malloc_fail_disable();
+
 #endif /* RBTREE_H */

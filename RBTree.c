@@ -1,5 +1,4 @@
 #include "RBTree.h"
-#include <fiu-local.h>
 
 enum Color {BLACK, RED};
 enum Side {LEFT = 0, RIGHT = 1, ROOT = -1, PSEUDO = -2, NONE = -3};
@@ -674,9 +673,32 @@ static enum Side get_side(const struct RBTree *node)
         return NONE;
 }
 
+#ifndef NDEBUG
+        int MALLOC_FAIL_ENABLE = 0;
+#endif
+
+void malloc_fail_enable()
+{
+        #ifndef NDEBUG
+        MALLOC_FAIL_ENABLE = 1;
+        #endif
+}
+
+void malloc_fail_disable()
+{
+        #ifndef NDEBUG
+        MALLOC_FAIL_ENABLE = 0;
+        #endif
+}
+
+
 static void* fiu_malloc(size_t size)
 {
-        fiu_return_on("malloc_failure", NULL);
+        #ifndef NDEBUG
+                if (MALLOC_FAIL_ENABLE) {
+                        return NULL;
+                }
+        #endif
         return malloc(size);
 }
 
