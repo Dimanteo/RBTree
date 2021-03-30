@@ -174,67 +174,7 @@ void test9(int test)
         rbt_destruct(tree);
 }
 
-void t10_callback(value_t val, struct RBTree* tree, void* cnt)
-{
-        (*(size_t*)cnt)++;
-        rbt_remove(tree, val + 1);
-}
-
 void test10(int test)
-{
-        struct RBTree *tree = rbt_init();
-        for (size_t i = 1; i <= 10; i++) {
-                check(rbt_insert(tree, i) == 1, test, __LINE__);
-        }
-        size_t size = rbt_get_size(tree);
-        size_t counter = 0;
-        rbt_foreach(tree, t10_callback, (void*)&counter);
-        check(counter == size, test, __LINE__);
-        check(rbt_get_size(tree) == 1, test, __LINE__);
-        rbt_destruct(tree);
-}
-
-void t11_callback(value_t val, struct RBTree* tree, void* cnt)
-{
-        (*(size_t*)cnt)++;
-        rbt_remove(tree, val - 1);
-}
-
-void test11(int test)
-{
-        struct RBTree *tree = rbt_init();
-        for (size_t i = 1; i <= 10; i++) {
-                check(rbt_insert(tree, i) == 1, test, __LINE__);
-        }
-        size_t size = rbt_get_size(tree);
-        size_t counter = 0;
-        rbt_foreach(tree, t10_callback, (void*)&counter);
-        check(counter == size, test, __LINE__);
-        check(rbt_get_size(tree) == 1, test, __LINE__);
-        rbt_destruct(tree);
-}
-
-void t12_callback(value_t val, struct RBTree* tree, void* cnt)
-{
-        (*(size_t*)cnt)++;
-        rbt_remove(tree, val);
-}
-
-void test12(int test)
-{
-        struct RBTree *tree = rbt_init();
-        for (size_t i = 1; i <= 10; i++) {
-                check(rbt_insert(tree, i) == 1, test, __LINE__);
-        }
-        size_t size = rbt_get_size(tree);
-        size_t counter = 0;
-        rbt_foreach(tree, t10_callback, (void*)&counter);
-        check(counter == size, test, __LINE__);
-        check(rbt_get_size(tree) == 1, test, __LINE__);
-        rbt_destruct(tree);
-}
-
-void test13(int test)
 {
         struct RBTree *tree = rbt_init();
         check(rbt_insert(tree, 2), test, __LINE__);
@@ -244,7 +184,7 @@ void test13(int test)
         rbt_destruct(tree);
 }
 
-void test14(int test)
+void test11(int test)
 {
         struct RBTree *tree = rbt_init();
         size_t N = 15;
@@ -258,7 +198,7 @@ void test14(int test)
         rbt_destruct(tree);
 }
 
-void test15(int test)
+void test12(int test)
 {
 #ifndef NDEBUG
         malloc_fail_enable();
@@ -287,7 +227,7 @@ void test15(int test)
 #endif
 }
 
-void test16(int test)
+void test13(int test)
 {
         size_t N = 1000;
         int *entry = alloca(sizeof(int) * N);
@@ -332,9 +272,6 @@ int main(int argc, char **argv)
         test11(11);
         test12(12);
         test13(13);
-        test14(14);
-        test15(15);
-        test16(16);
         return 0;
 }
 

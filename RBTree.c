@@ -21,8 +21,9 @@ static int insert(struct RBTree *tree, value_t val);
 
 static struct RBTree *find(struct RBTree *node, value_t val);
 
-static value_t *foreach(struct RBTree *node, value_t *values);
-
+static void foreach(struct RBTree *tree, struct RBTree *node,
+                        void(*callback)(value_t, struct RBTree*, void*), void *data);
+                        
 static int isempty(const struct RBTree *child);
 
 static int isroot(const struct RBTree *node);
@@ -150,14 +151,7 @@ int rbt_foreach(struct RBTree *tree,
                 return 0;
         }
 
-        size_t tree_size = rbt_get_size(tree);
-        // According to man, if alloca fails, program behavior is undefined \_('_')_/
-        value_t *values = alloca(tree_size * sizeof(values[0]));
-        foreach(node, values);
-        for (size_t i = 0; i < tree_size; i++) {
-                callback(values[i], tree, data);
-        }
-        
+        foreach(tree, node, callback, data);
         return 0;
 }
 
@@ -317,23 +311,23 @@ static struct RBTree *find(struct RBTree *node, value_t val)
         return ret_node;
 }
 
-static value_t *foreach(struct RBTree *node, value_t *values)
+static void foreach(struct RBTree *tree, struct RBTree *node,
+                        void(*callback)(value_t, struct RBTree*, void*), void *data)
 {
         assert(node);
-        assert(values);
+        assert(data);
+        assert(ispseudo(tree));
         assert(!ispseudo(node));
 
         struct RBTree *left_ch = get_left(node);
         struct RBTree *right_ch = get_right(node);
         if (!isempty(left_ch)) {
-                values = foreach(left_ch, values);
+                foreach(tree, left_ch, callback, data);
         }
-        values[0] = get_val(node);
-        values++;
+        callback(get_val(node), tree, data);
         if (!isempty(right_ch)) {
-                values = foreach(right_ch, values);
+                foreach(tree, right_ch, callback, data);
         }
-        return values;
 }
 
 static void insert_balance(struct RBTree *node)

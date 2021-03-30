@@ -76,9 +76,7 @@ int rbt_remove(struct RBTree *tree, value_t val);
  * @param callback Pointer to callback function.
  * @param data Pointer to pass to callback function as parameter.
  * @return int 0 on success, -1 on error.
- * @warning Function creates an array of values and then iterates through it.
- * That means, that modifying tree inside callback function 
- * will have no effect on iteration order and values.
+ * @warning Modifying tree in callback function leads to undefined behaviour.
  */
 int rbt_foreach(struct RBTree *tree,
                 void(*callback)(value_t, struct RBTree*, void*), void *data);
